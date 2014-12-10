@@ -66,9 +66,9 @@ BEGIN {
 	
 	
 #	next
-	printf ( "cp %s %s%04d.bmp \n", FINGER_BMP_FILE,SAVE_BMP_FILE_DIR,times); 
-
-	if(system("cp " FINGER_BMP_FILE " " SAVE_BMP_FILE_DIR  times ".bmp") != 0)
+	#printf ( "cp %s %s%04d.bmp \n", FINGER_BMP_FILE,SAVE_BMP_FILE_DIR,times); 
+	cmd=sprintf("cp %s %s%04d.bmp",FINGER_BMP_FILE, SAVE_BMP_FILE_DIR, times);
+	if(system(cmd) != 0)
 	{
 			print "Error..."
 	}	
