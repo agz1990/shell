@@ -1,0 +1,53 @@
+#!/bin/sh
+
+ARGS=`getopt -a -o r:l:C:i:p:t -l host:,changedir: -- "$@"`
+[ $? -ne 0 ] && usage
+#set -- "${ARGS}"
+eval set -- "${ARGS}"
+
+#set -x
+
+SINGLE_FILE_MOD="no"
+
+while true
+do
+    case "$1" in
+    -r)
+	    SINGLE_FILE_MOD="yes"
+        REMOTE_FILE="$2"
+            shift
+            ;;
+    -l)
+	    SINGLE_FILE_MOD="yes"
+        LOCAL_FILE="$2"
+            shift
+            ;;
+    -i|-p|--host)
+        TFTP_HOST="$2"
+        shift
+        ;;
+    -C|--changedir)
+        DEST_DIR="$2"
+        shift
+        ;;
+    --)
+            shift
+            break
+            ;;
+    esac
+shift
+done
+
+[ -z $TFTP_HOST ]  && TFTP_HOST='192.168.1.232'
+
+if [ $SINGLE_FILE_MOD == "yes" ]; then
+	echo "tftp -p $TFTP_HOST -r $REMOTE_FILE -l $LOCAL_FILE"
+	[ -n `tftp -p $TFTP_HOST -r $REMOTE_FILE -l $LOCAL_FILE` ] || exit 1
+else
+	while [ -n "$1" ]; do
+		LOCAL_FILE="$1"
+		echo "tftp -p $TFTP_HOST -r $LOCAL_FILE"
+		[ -n `tftp -p "$TFTP_HOST" -r "$LOCAL_FILE"` ] || exit 1
+		shift
+	done
+fi

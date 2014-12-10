@@ -1,0 +1,151 @@
+#!/bin/sh  
+
+help(){
+cat  << EOF
+########################################################################
+# Author      : jigc 
+# Script Name : svn-mark
+# Description : 对svn改动文件进行标记
+# Version     : V2.0
+# Usage       : svn-mark -r <起始版本号>:<结束版本号|HEAD> [-d parrten] [dirlist ... ]
+#         1. parrten 需要标记为排除的文件的正则公式
+#         2. dirlist 需要标记的文件列表 {warn}文件夹的顺序在打包脚本中叠加处理由"左到右叠加"
+# Mark Type   : 
+#    [ ]   -- 不含在 dirlist 中的文件
+#    [*]   -- 包含在 dirlist 中的文件
+#    [!]   -- 包含在 dirlist 中的文件，并匹配 -d 参数所指定的正则公式（过滤标志）
+# Log         :
+#  2014.07.01   V1.0: 实现基本功能 
+#  2014.11.21   V2.0：提高容错性 
+#
+# ++++++++++++++++++++
+# Example:
+# 1. 将新固件中数据库配置信息文件的更新标记为过滤
+#  {cmd} svn-mark -r 2112:HEAD -d '(ZKDB.db|options.cfg)' \
+resource/common/ resource/tft43/ mips/zmm220/ mips/ifacexxx
+#  说明：查询svn版本从2112至最新版本当前路径下所有改动信息，并对目录:resource/common/ resource/tft43/ mips/zmm220/ mips/ifacexxx
+# 进行有效标记，在标记的文件集里对文件名匹配 'ZKDB.db' 或 'options.cfg' 的文件添加过滤标记
+#
+# 2. 将新固件中的语言及驱动文件的更新标记为过滤
+#  {cmd} svn-mark -r 900:1500 -d '(.*LANGUAGE.?||.*ko)' arm/zmm100_tft35/
+#  说明：查询svn版本从900至1500当前路径下所有改动信息，并对目录:arm/zmm100_tft35/进行有效标记
+# 在标记的文件集里对文件名匹配 '.*LANGUAGE.?' 或 '.*ko' 的文件添加滤标记 
+#
+# ++++++++++++++++++++
+# {warn} 配合 process-markout 脚本使用，必须在SVN工程的根目录执行命令
+#
+########################################################################
+EOF
+
+}
+
+SVNLOG=""
+CMD_LIME="$0 $*"
+
+DUMP_SVN_LOG_FILE="$HOME/bin/dumpSvnLog.awk"
+DUMP_VALID_FILE_LIST_FILE="$HOME/bin/dumpValidFilelist.awk"
+SVN_LOG_FILE="/tmp/svn_${USER}.log"
+SVN_DUMP_FILE="/tmp/dumpsvn_${USER}.txt"
+
+#######################
+export ECHO="echo "
+export EGREP="egrep"
+#######################k
+
+mulDir="no"
+
+#获取参数##########################
+ARGS=`getopt -a -o r:d:h -l exclude:help -- "$@"`
+#[ $? -ne 0 ] && usage
+#set -- "${ARGS}"
+eval set -- "${ARGS}"
+while true
+do
+    case "$1" in
+    -r)
+	    SVNLOG="$2"
+        shift
+        ;;
+
+    -d|--exclude)
+        EXCLUDE_PATTERN="^$2$"
+        shift
+		;;
+	-h|--help)
+		help | awk  -F"{cmd}[ ]*" \
+		'NF==2{printf("%s命令: \033[32m%s\033[0m\n",$1,$2);next};{print}'\
+		|  awk  -F"{warn}[ ]*" 'NF==2{printf("%s\033[31m注意: %s\033[0m\n",$1,$2);next};{print}'
+		exit 0
+		;;
+    --)
+		until [ -z "$2" ]; do
+			[ $(echo "$2" | head -c1) = "-" ] && break
+			
+			dirName=$(echo "$2" | sed -e 's|/$||g')
+
+			if [ -z "$DIR_LIST" ]; then
+				DIR_LIST=$dirName
+				DEST_DIR_PATTERN=$DIR_LIST
+			else
+				mulDir="yes"
+				DIR_LIST=$DIR_LIST'|'$dirName;
+			fi
+			shift
+		done
+		
+		# 多目录处理逻辑
+		if [ "$mulDir" = "yes" ]; then
+			DEST_DIR_PATTERN="^(${DIR_LIST})/"
+		elif [ ! -z "$DEST_DIR_PATTERN" ]; then
+			DEST_DIR_PATTERN="^${DIR_LIST}/"
+		else 
+			DEST_DIR_PATTERN=""
+		fi
+		
+		break
+		;;
+    esac
+shift
+done
+
+###################################
+
+
+#打印SVN历次版本信息
+DumpSvnDetails()
+{
+	# 生成SVN原始表
+	svn log -r $SVNLOG -v > $SVN_LOG_FILE && awk -f $DUMP_SVN_LOG_FILE SVN_SUFFIX=$SVN_SUFFIX  $SVN_LOG_FILE
+}
+
+# 获取目标文件名
+GetTargetName()
+{
+	BASE_VERSION=$(echo $SVNLOG| cut -d : -f1)
+	HEAD_VERSION=$(echo $SVNLOG| cut -d : -f2)
+	[ "$HEAD_VERSION" = 'HEAD' ] && HEAD_VERSION=$(svn info | awk -F ": *" '/^(Last Changed Rev|最后修改的版本):/{print $2}')
+	echo $(basename $SVN_SUFFIX)"[Svn"${BASE_VERSION}"~"${HEAD_VERSION}"]"
+}
+
+#Main:脚本主入口#######################################
+
+# 获取SVN 分支路径
+SVN_ROOT=$(svn info | egrep "(Repository Root|版本库根):" | egrep -o 'svn.*')
+SVN_SUFFIX=$(svn info | awk -F $SVN_ROOT '/URL:/{print $2}')
+
+[ -z "$SVN_SUFFIX" ] && $ECHO "SVN INFO ERROR!" && exit 1
+
+DEST_DIR=$(GetTargetName)
+
+$ECHO "################################################################################"
+$ECHO "# SVN ROOT: " $SVN_SUFFIX
+$ECHO "# CMD LINE: " $CMD_LIME
+$ECHO "# Source Dir List: "$DIR_LIST
+$ECHO "# Target Dir Name: "$DEST_DIR
+$ECHO "# Dest Dir Pattern:'"$DEST_DIR_PATTERN"'"
+$ECHO "# Exclude Pattern :'"$EXCLUDE_PATTERN"'"
+$ECHO "################################################################################"
+
+DumpSvnDetails  > $SVN_DUMP_FILE && \
+awk -f $DUMP_VALID_FILE_LIST_FILE DEST_DIR_PATTERN=$DEST_DIR_PATTERN EXCLUDE_PATTERN=$EXCLUDE_PATTERN $SVN_DUMP_FILE | sort -n | uniq
+

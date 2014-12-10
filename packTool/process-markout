@@ -1,0 +1,91 @@
+#!/bin/sh 
+
+help(){
+cat << EOF
+########################################################################
+# Author      : jigc
+# Script Name : process-markout
+# Description : 处理 svn-mark 脚本生成的日志信息进行打包
+# Version     : V1.0
+# Usage       : svnMoreDetail.sh -f <svnMoreDetail.out>
+#         1. svn-mark.out -- 通过对 svn-mark 脚本生成的日志信息(将svn-mark 输出重定向到文件中)，进行打包及叠加处理
+# Log         :
+#  2014-11-21 V1.0：实现基本功能
+#
+# ++++++++++++++++++++
+# {warn} 配合 svn-mark 使用，必须在SVN工程的根目录执行命令
+#
+########################################################################
+EOF
+}
+#######################
+ECHO="echo "
+EGREP="egrep"
+#######################
+
+SVN_LOG_FILE="/tmp/svn_${USER}.log"
+SVN_DUMP_FILE="/tmp/dumpsvn_${USER}.txt"
+
+
+ARGS=`getopt -a -o f:h -l help -- "$@"`
+#[ $? -ne 0 ] && usage
+#set -- "${ARGS}"
+eval set -- "${ARGS}"
+while true
+do
+    case "$1" in
+	-f)
+		SVN_DETAIL_FILE="$2"
+        shift
+        ;;
+    --)
+		break
+		;;
+	-h|--help)
+		help | awk  -F"{cmd}[ ]*" \
+		'NF==2{printf("%s命令: \033[32m%s\033[0m\n",$1,$2);next};{print}'\
+		|  awk  -F"{warn}[ ]*" 'NF==2{printf("%s\033[31m注意: %s\033[0m\n",$1,$2);next};{print}'
+		exit 0
+		;;
+    esac
+shift
+done
+
+
+#Main:脚本主入口#######################################
+DEST_DIR=$($EGREP "Target Dir Name" $SVN_DETAIL_FILE | cut -d : -f2)
+DIR_LIST=$($EGREP "Source Dir List" $SVN_DETAIL_FILE | cut -d : -f2 | sed -e 's/|/ /g')
+
+cat << EOF
+
+################################################################################
+# DEST_DIR:${DEST_DIR}
+# DIR_LIST: '$(echo $DIR_LIST)'
+################################################################################
+
+EOF
+
+rm $DEST_DIR -rf
+
+destFile=""
+for dir in $DIR_LIST; do
+	echo "\n *** [$dir] ***"
+	for srcFile in $(awk '/^ \[\*\]\t/ {print $2}'  $SVN_DETAIL_FILE); do
+		if [ `echo $srcFile | grep "^$dir/"` ]; then
+
+			SED_STR="s|^$dir|$DEST_DIR|g"
+			destFile=$(echo $srcFile | sed -e "$SED_STR")
+			
+			## 拷贝复制文件		
+			[ ! -d $(dirname "$destFile") ] && mkdir -p $(dirname "$destFile")
+			[ ! -d $srcFile ] && cp $srcFile $destFile && echo " Copy:\t$srcFile ===>> $destFile"
+		fi
+	done
+done
+
+# 压缩的时候自动将语言文件大小写打包到同一个目录
+(cd $DEST_DIR && chmod 755 * -R && tar -zcf ${DEST_DIR}".tgz" * --transform="s|language/lang|language|g"  --transform="s|wav/wav|wav|g")
+
+# 拷贝日志文件：
+cp $SVN_LOG_FILE $SVN_DETAIL_FILE $DEST_DIR 
+

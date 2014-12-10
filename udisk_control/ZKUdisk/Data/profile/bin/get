@@ -1,0 +1,76 @@
+#!/bin/sh
+
+ARGS=`getopt -a -o r:l:C:i:g:xed -l host:,changedir: -- "$@"`
+[ $? -ne 0 ] && usage
+#set -- "${ARGS}"
+eval set -- "${ARGS}"
+
+#set -x
+
+SINGLE_FILE_MOD="no"
+DEST_DIR="."
+
+while true
+do
+    case "$1" in
+    -r)
+	    SINGLE_FILE_MOD="yes"
+        REMOTE_FILE="$2"
+            shift
+            ;;
+    -l)
+	    SINGLE_FILE_MOD="yes"
+        LOCAL_FILE="$2"
+            shift
+            ;;
+    -i|-g|--host)
+        TFTP_HOST="$2"
+        shift
+        ;;
+    -C|--changedir)
+        DEST_DIR="$2"
+        shift
+        ;;
+    -x)
+		TAR_FLAG="yes"
+	;;
+    -e)
+		CHMOD_FLAG="yes"
+	;;
+    -d)
+		DELETE_FLAG="yes"
+	;;
+    --)
+            shift
+            break
+            ;;
+    esac
+shift
+done
+
+[ -z $TFTP_HOST ]  && TFTP_HOST='192.168.1.232'
+
+if [ $SINGLE_FILE_MOD == "yes" ]; then
+	echo "tftp -g $TFTP_HOST -r $REMOTE_FILE -l $LOCAL_FILE"
+	[ -n `tftp -g $TFTP_HOST -r $REMOTE_FILE -l $LOCAL_FILE` ] || exit 1
+	[ "$CHMOD_FLAG" = "yes" ] && chmod 777 $LOCAL_FILE  
+
+	if [ "$TAR_FLAG" = "yes" ]; then
+		echo "*** Begin extract TAR file: "$LOCAL_FILE" ...." && tar -zxvf "$LOCAL_FILE" -C $DEST_DIR
+		[ "$DELETE_FLAG" = "yes" ] && echo "*** Remove TAR file..." && rm $LOCAL_FILE
+	fi
+else
+	while [ -n "$1" ]; do
+		LOCAL_FILE="$1"
+		echo "tftp -g $TFTP_HOST -r $LOCAL_FILE"
+		[ -n `tftp -g "$TFTP_HOST" -r "$LOCAL_FILE"` ] || exit 1
+		[ "$CHMOD_FLAG" = "yes" ] && chmod 777 $LOCAL_FILE 
+
+		if [ "$TAR_FLAG" = "yes" ]; then
+			echo "*** Begin extract TAR file: "$LOCAL_FILE" ...." && tar -zxvf "$LOCAL_FILE" -C $DEST_DIR
+			[ "$DELETE_FLAG" = "yes" ] && echo "*** Remove TAR file..." && rm $LOCAL_FILE
+		fi
+		
+		shift
+	done
+fi

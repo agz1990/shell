@@ -1,0 +1,17 @@
+#!/bin/sh
+echo  "*** 开始安装:"
+for f in `ls *awk svn-mark process-markout `; do 
+	echo "ln -s $(pwd)/${f}  ${HOME}/bin/${f} -f" | sh -x 
+done
+
+echo
+echo  "*** 安装成功请阅读说明:"
+echo
+
+echo "cmd:[svn-mark]"
+svn-mark -h
+
+echo
+echo "cmd:[sprocess-markout]"
+process-markout -h
+

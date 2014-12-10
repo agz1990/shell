@@ -1,0 +1,2 @@
+#/bin/sh
+cat /etc/option.list | egrep  -i "$1" | xargs appOptionUtil -g
