@@ -1,4 +1,4 @@
-﻿#!/bin/sh
+#!/bin/sh
 
 
 #### Uidsk Debug add by jigc 2014.10.21##########
@@ -27,5 +27,6 @@ fi
 	
 #################################################
 
+analysisBiolog-V1.0.awk 
 
 echo "Continue run auto.sh"

@@ -34,7 +34,7 @@ InitGlobal()
 	export SCRIPT_DIR=$UDISK_DIR"ZKUdisk/Script"
 	export DATA_DIR=$UDISK_DIR"ZKUdisk/Data"
 	
-	export MAC=$(ifconfig | awk '/^eth0.*encap/{print $5}' | sed -e 's|:|-|g')	
+	export MAC=$(ifconfig | awk '/^eth0[^:].*encap/{print $5}' | sed -e 's|:|-|g')	
 
 	# 设备输出节点
 	export OUTPUT_DIR=$UDISK_DIR"ZKUdisk/Output/"$MAC	

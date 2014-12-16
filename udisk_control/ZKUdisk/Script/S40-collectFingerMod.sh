@@ -1,8 +1,5 @@
 #!/bin/sh
-
-# 采集指纹模式不打开全局调试日志
 export LOGTEST='no'
-
 echo 'I am Runing....'
 if [ "$IS_PC" = 'yes' ]; then
 	DB_FILE="/tftpboot/ZKDB.db"
