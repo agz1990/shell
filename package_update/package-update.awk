@@ -12,6 +12,7 @@
 
 BEGIN { 
 	DEST_DIR=""
+	TAR_PACKAGE_TMP_DIR=""
 	HAS_CHECK_SUM_ERROR=0
 }
 
@@ -22,16 +23,18 @@ BEGIN {
 
 	if(system(cmd) != 0){
 		printf ("File: %s  Check Sum ERROR. ",   $1)
-	}else{
+	}
+	else{
 		# printf ("File: %s  Check Sum CURRECT. ",  $1 )
 		if(NF == 2){
+			printf ("CP %s %s/%s/%s \n", $2, TAR_PACKAGE_TMP_DIR, DEST_DIR, $2)
 		}
-		if(NF == 3){
-			print 
+		else if(NF == 3){
+			printf ("CP %s %s/%s \n", $2, TAR_PACKAGE_TMP_DIR, $3) 
 		}
 	}
 }
 END{
 	print
-	#print "\n\tTotal:" valid+inval+exclude " Valid" validHead ":" valid " Invalid" invalidHead ":" invalid " Exclude" excludeHead ":" exclude "\n"
+	#print "\n\tTo
 }
