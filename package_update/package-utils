@@ -1,11 +1,4 @@
 #!/bin/ksh 
-################################################################################
-#文件名:
-#Function:
-#
-#History:
-# 2015-07-13   jigc create
-################################################################################
 
 ECHO="echo " 
 EGREP="egrep"
@@ -23,18 +16,13 @@ cat  << EOF
 ########################################################################
 # Author      : jigc 
 # Script Name : $0
-# Description : 对svn改动文件进行标记
+# Description : 
 # Version     : V2.0
-# Usage       : $0 -r <起始版本号>:<结束版本号|HEAD> -f <配置文件绝对路径> [-d parrten] [dirlist ... ]
-#         1. parrten 需要标记为排除的文件的正则公式
-#         2. dirlist 需要标记的文件列表 {warn}文件夹的顺序在打包脚本中叠加处理由"左到右叠加"
-# Mark Type   : 
-#    [ ]   -- 不含在 dirlist 中的文件
-#    [*]   -- 包含在 dirlist 中的文件
-#    [!]   -- 包含在 dirlist 中的文件，并匹配 -d 参数所指定的正则公式（过滤标志）
+# Usage       : $0 --conf <配置文件地址>
+
+
 # Log         :
-#  2014.07.01   V1.0: 实现基本功能 
-#  2014.11.21   V2.0：提高容错性 
+#  2015.07.15   V1.0: 实现基本功能 
 #
 #
 ########################################################################
@@ -42,10 +30,12 @@ EOF
 
 }
 
-# package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20150112-11224364.conf 
-# ./package-utils --extract-mode --conf ~/shell/update_tools/update.conf  --package-name  ~/update.tgz  --backup-package-name  ~/shell/update_tools/back-xxx.tgz
+# ./package-utils --create-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# ./package-utils --extract-mode  --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
 
-# ./package-utils --extract-mode  --excute-override --conf ~/shell/update_tools/update.conf 
+# ./package-utils --extract-mode  --excute-override --conf  /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+
+# ./package-utils --restore-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
 
 
 
@@ -84,9 +74,13 @@ do
 	--extract-mode)
 		MODE="EXTRACT-MODE"
 		 ;;
+	--restore-mode)
+		MODE="RESTORE-MODE"
+		 ;;
 	--excute-override)
 		OVERRIDE_FLAG="YES"
 		;;
+		
     --)
 		
 		break
@@ -102,7 +96,7 @@ done
 UTILS_WORKING_DIR="$HOME/package-utils-output/${ORDER_NAME}"
 
 # 压缩文件临时文件夹 
-TAR_PACKAGE_TMP_DIR="${UTILS_WORKING_DIR}/tmp/"
+export TAR_PACKAGE_TMP_DIR="${UTILS_WORKING_DIR}/tmp/"
 
 
 # 
@@ -113,7 +107,9 @@ BACKUP_PACKAGE_NAME="${UTILS_WORKING_DIR}/${ORDER_NAME}-BACKUP.tgz"
 #main 入口#################################
 
 clean_up(){
-	$ECHO "rm -rf ${TAR_PACKAGE_TMP_DIR}"
+
+	$ECHO "\n[MESSAGE]	清除临时文件夹 ...."
+	$ECHO "rm -rf ${TAR_PACKAGE_TMP_DIR}"  | sh -x
 }
 
 create_init(){
@@ -121,6 +117,7 @@ create_init(){
 $ECHO 
 $ECHO 
 $ECHO "################################################################################"
+$ECHO "# 用户名@主机              ：`whoami`@`hostname`"
 $ECHO "# SVN 版本号               : ${SVN_VERSION}" 
 $ECHO "# SVN 基础路径             : ${SVN_BASE_FIEL_DIR}"
 $ECHO "# 更新压缩包绝对值路径     : ${UPDATE_PACKAGE_NAME}" 
@@ -137,7 +134,12 @@ $ECHO "#########################################################################
 }
 
 
-
+color_diff(){
+	echo "\033[31m* diff $1 $2 \033[0m"
+	echo "================================================================================"
+	diff $1 $2 | sed -e "s/^/|/" | awk  '/^\|</{printf("\033[32m%s\033[0m\n",$0);next};{print}'
+	echo "================================================================================"
+}
 
 my_copy(){
 	source_file=$1
@@ -158,12 +160,6 @@ my_copy(){
 create_process(){
 	create_init		# 初始化函数
 	
-	
-	# 执行钩子函数
-	$ECHO "\n\n[HOOK PRE-PACKAGE] BEGINE...\n" 
-	(pre_package)
-	$ECHO "\n[HOOK PRE-PACKAGE] END...\n\n" 
-	
 	$ECHO "\n[MESSAGE]	改变路径到SVN目录下: ${SVN_BASE_FIEL_DIR}\n"
 	cd $SVN_BASE_FIEL_DIR 
 	
@@ -178,7 +174,7 @@ create_process(){
 	
 	# 解析配置文件并拷贝更新文件到指定文件夹
 	
-	$ECHO "\n[MESSAGE]	解析配置文件并检查cksum至后拷贝更新文件到指定文件夹: ${TAR_PACKAGE_TMP_DIR}\n"
+	$ECHO "\n[MESSAGE]	解析配置文件并检查cksum后拷贝至更新文件到指定文件夹: ${TAR_PACKAGE_TMP_DIR}\n"
 	file_list | awk  -f ${AWK_FORMAT_ABS_PAHT} TAR_PACKAGE_TMP_DIR=${TAR_PACKAGE_TMP_DIR} DEST_DIR=${DEST_DIR} | while read line ; do
 		
 		$ECHO  $line | $EGREP -q "^CP"
@@ -189,12 +185,18 @@ create_process(){
 			fi
 		fi
 		
-		$ECHO  $line | $EGREP -q "^(ERROR|WARMING|DEBUG)"
+		$ECHO  $line | $EGREP -q "^\[ERROR\]"
 		if [ $? -eq 0 ]; then
-			$ECHO "[MESSAGE] $line"
+			$ECHO $line
+			exit 1
 		fi
 	done  
 	
+	
+	# 执行钩子函数
+	$ECHO "\n\n[HOOK BEFORE-PACKAGE] BEGINE...\n" 
+	(before_package)
+	$ECHO "\n[HOOK BEFORE-PACKAGE] END...\n\n" 
 	
 	
 	# 切换工作目录到生成文件的根目录
@@ -203,13 +205,13 @@ create_process(){
 	cd "${TAR_PACKAGE_TMP_DIR}"
 	
 	$ECHO  "[MESSAGE]	开始打包所有需要更新的文件到:[ ${UPDATE_PACKAGE_NAME} ] ...\n"
-	tar -cvf "${UPDATE_PACKAGE_NAME}" *
+	tar -cvf "${UPDATE_PACKAGE_NAME}" * 
 	
 	if [ $? -eq 0 ]; then
 		_file_cnt=`tar -tf "${UPDATE_PACKAGE_NAME}" | sed -e '/\/$/d' | wc -l`
-		$ECHO  "\n[MESSAGE]	PACKAGE FILE:[ ${UPDATE_PACKAGE_NAME}(total:$_file_cnt) ] SUCCESS..."
+		$ECHO  "\n[MESSAGE]	打包完成共打包(total:${_file_cnt})个文件 SUCCESS..."
 	else
-		$ECHO  "\n[ERROR]	PACKAGE FILE:[ ${UPDATE_PACKAGE_NAME} ] FAILT..."
+		$ECHO  "\n[ERROR]	打包出错:[ ${UPDATE_PACKAGE_NAME} ] FAILT..."
 		exit 1
 	fi
 	
@@ -228,12 +230,13 @@ extract_init(){
 $ECHO 
 $ECHO 
 $ECHO "################################################################################"
-$ECHO "# 新压缩包绝对值路径       : ${PACKAGE_NAME}" 
+$ECHO "# 用户名@主机              ：`whoami`@`hostname`"
+$ECHO "# 新压缩包绝对值路径       : ${UPDATE_PACKAGE_NAME}" 
 $ECHO "# 备份压缩包绝对路径       : ${BACKUP_PACKAGE_NAME}" 
 $ECHO "# 配置文件绝对值路径       : ${CONFILE_NAME}"
 $ECHO "# 生产的目标路径           : ${DEST_DIR}"
 $ECHO "# 压缩文件临时文件夹       : ${TAR_PACKAGE_TMP_DIR}"
-$ECHO "# 执行备份                 : ${EXCUTE_FLAG}"
+$ECHO "# 执行覆盖升级             : ${OVERRIDE_FLAG}"
 $ECHO "# 命令行                   : ${CMD_LIME}"
 $ECHO "################################################################################"
 
@@ -252,9 +255,9 @@ extract_process(){
 	extract_init
 	
 	# 执行钩子函数
-	$ECHO "\n\n[HOOK PRE-PACKAGE] BEGINE...\n" 
-	(pre_backup)
-	$ECHO "\n[HOOK PRE-PACKAGE] END...\n\n" 
+	$ECHO "\n\n[HOOK BEFORE-PACKAGE] BEGINE...\n" 
+	(before_backup)
+	$ECHO "\n[HOOK BEFORE-PACKAGE] END...\n\n" 
 	
 
 	
@@ -263,7 +266,7 @@ extract_process(){
 	
 	
 	tar -tf ${UPDATE_PACKAGE_NAME} | sed -e '/\/$/d' | while read file; do
-		if [ -f $file ]; then
+		if [ -f "/$file" ]; then
 			let "_update_cnt += 1"
 			$ECHO  "[MESSAGE]	FILE:[ /${file} ] WILL BE UPDATE ..."
 			my_copy "/$file"  "${TAR_PACKAGE_TMP_DIR}/$file"
@@ -272,12 +275,12 @@ extract_process(){
 			$ECHO  "[WARNMING]	FILE:[ /${file} ] WILL BE ADD..."
 		fi
 	done
+	
+	
 	let "_total = _update_cnt + _add_cnt"
 	
 	# 打印总结信息
 	$ECHO  "\n[WARMING]	***  Total(${_total}), Update(${_update_cnt}),  Add(${_add_cnt}) ***\n"
-	
-	
 
 
 	if [ ${_update_cnt} -gt 0 ]; then
@@ -288,11 +291,11 @@ extract_process(){
 		
 		$ECHO  "[MESSAGE]	开始备份所有需要更新的文件到:[ ${BACKUP_PACKAGE_NAME} ] ...\n"
 	
-		tar -cvf ${BACKUP_PACKAGE_NAME} *
+		tar -cvf ${BACKUP_PACKAGE_NAME} * 
 		
 		if [ $? -eq 0 ]; then
 			_file_cnt=`tar -tf ${BACKUP_PACKAGE_NAME} | sed -e '/\/$/d' | wc -l`
-			$ECHO  "\n[MESSAGE]	PACKAGE FILE:[ ${BACKUP_PACKAGE_NAME}(total:$_file_cnt) ] SUCCESS..."
+			$ECHO  "\n[MESSAGE]	打包完成共打包(total:${_file_cnt})个文件 SUCCESS..."
 		else
 			$ECHO  "\n[ERROR]	PACKAGE FILE:[ ${BACKUP_PACKAGE_NAME} ] FAILT..."
 			exit 1
@@ -303,18 +306,86 @@ extract_process(){
 	
 	
 	if [ "${OVERRIDE_FLAG}" = "YES" ]; then
-		# 备份原文件 
-		$ECHO "[MESSAGE]	更新文件: ${TAR_PACKAGE_TMP_DIR}\n\n"
+		
+		$ECHO "[MESSAGE]	开始更新文件..."
+		$ECHO "[MESSAGE]	将更新压缩包:[ ${UPDATE_PACKAGE_NAME} ] 解压...\n"
+		cd /
+		tar -xvf ${UPDATE_PACKAGE_NAME} 
+		if [ $? -eq 0 ]; then
+			_file_cnt=`tar -tf "${UPDATE_PACKAGE_NAME}" | sed -e '/\/$/d' | wc -l`
+			$ECHO  "\n[MESSAGE]	更新成功总共更新(total:${_file_cnt})个文件 SUCCESS..."
+		else
+			$ECHO  "\n[ERROR]	解压缩出错:[ ${UPDATE_PACKAGE_NAME} ] FAILT..."
+			exit 1
+		fi
 	fi
 	
 	
 	# 执行钩子函数
-	$ECHO "\n\n[HOOK PRE-PACKAGE] BEGINE...\n" 
+	$ECHO "\n\n[HOOK BEFORE-PACKAGE] BEGINE...\n" 
 	(after_backup)
-	$ECHO "\n[HOOK PRE-PACKAGE] END...\n\n" 
+	$ECHO "\n[HOOK BEFORE-PACKAGE] END...\n\n" 
 	
 }
 
+restore_init(){
+
+$ECHO 
+$ECHO 
+$ECHO "################################################################################"
+$ECHO "# 用户名@主机              ：`whoami`@`hostname`"
+$ECHO "# 已更新压缩包绝对值路径   : ${UPDATE_PACKAGE_NAME}" 
+$ECHO "# 备份压缩包绝对路径       : ${BACKUP_PACKAGE_NAME}" 
+$ECHO "# 配置文件绝对值路径       : ${CONFILE_NAME}"
+$ECHO "# 生产的目标路径           : ${DEST_DIR}"
+$ECHO "# 压缩文件临时文件夹       : ${TAR_PACKAGE_TMP_DIR}"
+$ECHO "# 命令行                   : ${CMD_LIME}"
+$ECHO "################################################################################"
+
+	
+	mkdir -p ${TAR_PACKAGE_TMP_DIR}
+
+}
+
+
+restore_process(){
+	restore_init
+	
+	if [ ! -f ${UPDATE_PACKAGE_NAME} ]; then 
+		$ECHO  "[ERROR]	系统找不到指定单号原有单号的更新包:[ ${UPDATE_PACKAGE_NAME} ] 无法进行恢复操作 ..."
+		exit 1
+	fi	
+	
+	cd /
+	$ECHO  "\n[MESSAGE]	开始回退, 将[ ${UPDATE_PACKAGE_NAME} ] 升级包中的文件在对应文件系统中删除 ..."
+	tar -tf ${UPDATE_PACKAGE_NAME} | sed -e '/\/$/d' -e 's|^|/|' | while read filename; do
+		if [ -f $filename ]; then
+			$ECHO "rm ${filename}" | sh
+		else
+			$ECHO  "[WARNMING]	回退目标文件[$filename]不存在 请确认..."
+		fi
+	done
+	
+	$ECHO  "\n[MESSAGE]	回退完成 ..."
+	
+	
+	$ECHO
+	$ECHO "[MESSAGE]	开始进行还原 ..."
+	$ECHO "[MESSAGE]	将更新压缩包:[ ${BACKUP_PACKAGE_NAME} ] 解压...\n"
+	cd /
+	tar -xvf ${BACKUP_PACKAGE_NAME} 
+	if [ $? -eq 0 ]; then
+		_file_cnt=`tar -tf "${BACKUP_PACKAGE_NAME}" | sed -e '/\/$/d' | wc -l`
+		$ECHO  "\n[MESSAGE]	还原成功总共还原(total:${_file_cnt})个文件 SUCCESS..."
+	else
+		$ECHO  "\n[ERROR]	解压缩出错:[ ${BACKUP_PACKAGE_NAME} ] FAILT..."
+		exit 1
+	fi
+	
+	$ECHO  "\n[MESSAGE]	还原完成 ..."
+
+
+}
 
 case "${MODE}" in
 	
@@ -324,6 +395,11 @@ case "${MODE}" in
 		;;
 	"EXTRACT-MODE")
 		extract_process
+		break
+		;;
+		
+	"RESTORE-MODE")
+		restore_process
 		break
 		;;
 	--|*)

@@ -2,13 +2,15 @@
 
 ########################################################################
 # Author      : jigc 
-# Script Name : dumpValidFilelist.awk
-# Date        : 2014-12-01
+# Script Name : 
+# Date        : 2015-07-13
 # Description :
 # Usage       : 
 # Log:
 #
 ########################################################################
+
+
 
 BEGIN { 
 	DEST_DIR=""
@@ -22,7 +24,8 @@ BEGIN {
 	# print cmd
 
 	if(system(cmd) != 0){
-		printf ("File: %s  Check Sum ERROR. ",   $1)
+		printf ("[ERROR] File: %s  Check Sum ERROR. \n\n",   $2)
+		#exit 1
 	}
 	else{
 		# printf ("File: %s  Check Sum CURRECT. ",  $1 )
@@ -35,6 +38,7 @@ BEGIN {
 	}
 }
 END{
-	print
-	#print "\n\tTo
+	# print
+	#
+
 }
