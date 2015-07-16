@@ -356,17 +356,26 @@ restore_process(){
 		exit 1
 	fi	
 	
+	
+	_file_cnt=0
 	cd /
 	$ECHO  "\n[MESSAGE]	开始回退, 将[ ${UPDATE_PACKAGE_NAME} ] 升级包中的文件在对应文件系统中删除 ..."
 	tar -tf ${UPDATE_PACKAGE_NAME} | sed -e '/\/$/d' -e 's|^|/|' | while read filename; do
 		if [ -f $filename ]; then
-			$ECHO "rm ${filename}" | sh
+			let "_file_cnt += 1"
+			$ECHO "rm ${filename}" | sh -x
+			if [ $? -gt 0 ]; then
+				$ECHO "[ERROR]	删除文件[ ${filename} ] 失败，请检查原因 ..."
+			fi
 		else
 			$ECHO  "[WARNMING]	回退目标文件[$filename]不存在 请确认..."
 		fi
 	done
-	
-	$ECHO  "\n[MESSAGE]	回退完成 ..."
+	if [ ${_file_cnt} -gt 0 ]; then
+		$ECHO  "\n[MESSAGE]	回退完成 共删除(total:${_file_cnt}) 个文件..."
+	else
+		$ECHO  "\n[WARMING]	回退过程中并未回退任何文件，请确认是否正常，如果正常请忽略此警告 ..."
+	fi 
 	
 	
 	$ECHO
