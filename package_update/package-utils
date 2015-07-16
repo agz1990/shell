@@ -2,47 +2,75 @@
 
 ECHO="echo " 
 EGREP="egrep"
+
+# 命令行
 CMD_LIME="$0 $*"
+
+# 运行的模式
 MODE="UNKNOW-MODE"
+
+# 配置文件名称
 CONFILE_NAME=""
 
+# 是否执行覆盖标志 通过 --excute-override 参数设置为YES
 OVERRIDE_FLAG="NO"
 
 
-AWK_FORMAT_ABS_PAHT="/home/mcb3user/jigc/shell/update_tools/package-update.awk"
+# awk 辅助脚本路径
+AWK_FORMAT_ABS_PAHT="$HOME/bin/package-utils.awk"
 
 help(){
 cat  << EOF
 ########################################################################
-# Author      : jigc 
-# Script Name : $0
-# Description : 
-# Version     : V2.0
-# Usage       : $0 --conf <配置文件地址>
+# Author      : jigc@cmsz.com
+# Script Name : package-utils
+# Description : 上线辅助脚本
+# Version     : V1.1
+# Usage       : package-utils [--create-mode|--extract-mode|--restore-mode] --conf <配置文件地址>
 
+         --conf 指定配置文件的路径，配置文件格式为 工单编号.conf(OO-20150710-00000001.conf)
+		 
+         --create-mod    脚本工作在创建更新包的模式下
+             
+         --extract-mode  脚本工作在更新及备份的模式下(默认仅做备份不做跟新)
+             --excute-override 执行更新动作
+			 
+         --restore-mode  脚本工作在回退的模式下
 
 # Log         :
 #  2015.07.15   V1.0: 实现基本功能 
+#  2015.07.16	V1.1: 完善注释及帮助文档
 #
+# Example     :
+#
+#  生成更新包：
+#    package-utils --create-mode --conf /path/to/conffile/OO-20150710-00000001.conf
+#
+#  进行备份：
+#    package-utils  --extract-mode  --conf /path/to/conffile/KR-20150112-11224364.conf 
+#
+#  进行备份后再更新:
+#    package-utils --extract-mode --excute-override  --conf /path/to/conffile/KR-20150112-11224364.conf 
+#
+#  回退：
+#     package-utils  --restore-mode  --conf /path/to/conffile/KR-20150112-11224364.conf 
 #
 ########################################################################
 EOF
 
 }
 
-# ./package-utils --create-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
-# ./package-utils --extract-mode  --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# 测试钩子	./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20150112-11224364.conf 
 
-# ./package-utils --extract-mode  --excute-override --conf  /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# 测试2 ./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20140606-14110307.conf
+# 测试打包 ./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# 测试备份 ./package-utils --extract-mode  --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# 测试备份并升级覆盖 ./package-utils --extract-mode --excute-override --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
 
-# ./package-utils --restore-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
-
-
+# 测试撤销功能 ./package-utils --restore-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf
 
 #获取参数##########################
 
-#set -- `getopt cxh:bf:p:d $*` 
-#eval set -- "${ARGS}"
 while [ $# -gt 0 ]; 
 do
 
@@ -104,7 +132,13 @@ UPDATE_PACKAGE_NAME="${UTILS_WORKING_DIR}/${ORDER_NAME}-UPDATE.tgz"
 BACKUP_PACKAGE_NAME="${UTILS_WORKING_DIR}/${ORDER_NAME}-BACKUP.tgz"
 
 
-#main 入口#################################
+# 更新的文件列表
+file_list(){ # 此函数不能修改 
+cat <<EOF
+${FILE_LIST}
+EOF
+}
+
 
 clean_up(){
 
@@ -117,6 +151,7 @@ create_init(){
 $ECHO 
 $ECHO 
 $ECHO "################################################################################"
+$ECHO "# 运行的模式               : ${MODE}"
 $ECHO "# 用户名@主机              ：`whoami`@`hostname`"
 $ECHO "# SVN 版本号               : ${SVN_VERSION}" 
 $ECHO "# SVN 基础路径             : ${SVN_BASE_FIEL_DIR}"
@@ -194,9 +229,9 @@ create_process(){
 	
 	
 	# 执行钩子函数
-	$ECHO "\n\n[HOOK BEFORE-PACKAGE] BEGINE...\n" 
+	$ECHO "\n\n[HOOK] BEGINE...\n" 
 	(before_package)
-	$ECHO "\n[HOOK BEFORE-PACKAGE] END...\n\n" 
+	$ECHO "\n[HOOK] END...\n\n" 
 	
 	
 	# 切换工作目录到生成文件的根目录
@@ -218,9 +253,9 @@ create_process(){
 	
 	
 	# 执行钩子函数
-	$ECHO "\n\n[HOOK AFTER-PACKAGE] BEGINE...\n" 
+	$ECHO "\n\n[HOOK] BEGINE...\n" 
 	(after_package)
-	$ECHO "\n[HOOK AFTER-PACKAGE] END...\n\n" 
+	$ECHO "\n[HOOK] END...\n\n" 
 	
 
 }
@@ -230,6 +265,7 @@ extract_init(){
 $ECHO 
 $ECHO 
 $ECHO "################################################################################"
+$ECHO "# 运行的模式               : ${MODE}"
 $ECHO "# 用户名@主机              ：`whoami`@`hostname`"
 $ECHO "# 新压缩包绝对值路径       : ${UPDATE_PACKAGE_NAME}" 
 $ECHO "# 备份压缩包绝对路径       : ${BACKUP_PACKAGE_NAME}" 
@@ -255,9 +291,9 @@ extract_process(){
 	extract_init
 	
 	# 执行钩子函数
-	$ECHO "\n\n[HOOK BEFORE-PACKAGE] BEGINE...\n" 
-	(before_backup)
-	$ECHO "\n[HOOK BEFORE-PACKAGE] END...\n\n" 
+	$ECHO "\n\n[HOOK] BEGINE...\n" 
+	(before_extract)
+	$ECHO "\n[HOOK] END...\n\n" 
 	
 
 	
@@ -322,9 +358,9 @@ extract_process(){
 	
 	
 	# 执行钩子函数
-	$ECHO "\n\n[HOOK BEFORE-PACKAGE] BEGINE...\n" 
-	(after_backup)
-	$ECHO "\n[HOOK BEFORE-PACKAGE] END...\n\n" 
+	$ECHO "\n\n[HOOK] BEGINE...\n" 
+	(after_extract)
+	$ECHO "\n[HOOK] END...\n\n" 
 	
 }
 
@@ -333,6 +369,7 @@ restore_init(){
 $ECHO 
 $ECHO 
 $ECHO "################################################################################"
+$ECHO "# 运行的模式               : ${MODE}"
 $ECHO "# 用户名@主机              ：`whoami`@`hostname`"
 $ECHO "# 已更新压缩包绝对值路径   : ${UPDATE_PACKAGE_NAME}" 
 $ECHO "# 备份压缩包绝对路径       : ${BACKUP_PACKAGE_NAME}" 
@@ -350,6 +387,11 @@ $ECHO "#########################################################################
 
 restore_process(){
 	restore_init
+	
+	# 执行钩子函数
+	$ECHO "\n\n[HOOK] BEGINE...\n" 
+	(after_restore)
+	$ECHO "\n[HOOK] END...\n\n" 
 	
 	if [ ! -f ${UPDATE_PACKAGE_NAME} ]; then 
 		$ECHO  "[ERROR]	系统找不到指定单号原有单号的更新包:[ ${UPDATE_PACKAGE_NAME} ] 无法进行恢复操作 ..."
@@ -392,9 +434,16 @@ restore_process(){
 	fi
 	
 	$ECHO  "\n[MESSAGE]	还原完成 ..."
+	
+	# 执行钩子函数
+	$ECHO "\n\n[HOOK] BEGINE...\n" 
+	(after_restore)
+	$ECHO "\n[HOOK] END...\n\n" 
 
 
 }
+
+#main 入口#################################
 
 case "${MODE}" in
 	
