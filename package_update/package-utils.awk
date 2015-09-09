@@ -18,8 +18,13 @@ BEGIN {
 	HAS_CHECK_SUM_ERROR=0
 }
 
-# TODO 过滤掉空行
-/^[^#]/{
+
+$0 !~ /^[ \t\r]*[#]/ {
+	
+	if($0 ~ /^[ \t\r]*$/) {
+		next  # 过滤掉空行
+	}; 
+ 
 	cmd = sprintf ( "test  %s -eq `cksum %s| awk '{print $1}'` 	", $1,$2) 
 	# print cmd
 
