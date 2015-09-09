@@ -18,7 +18,7 @@ BEGIN {
 	HAS_CHECK_SUM_ERROR=0
 }
 
-
+# TODO ¹ýÂËµô¿ÕÐÐ
 /^[^#]/{
 	cmd = sprintf ( "test  %s -eq `cksum %s| awk '{print $1}'` 	", $1,$2) 
 	# print cmd

@@ -1,6 +1,6 @@
 #!/bin/ksh 
 
-ECHO="echo " 
+ECHO="echo -e" 
 EGREP="egrep"
 
 # √¸¡Ó––
@@ -181,7 +181,7 @@ my_copy(){
 	dest_file=$2
 	dest_dir=`dirname $dest_file` 
 	[ ! -d "${dest_dir}" ] && $ECHO "mkdir -p ${dest_dir} "   | sh 
-	$ECHO "cp ${source_file} ${dest_file}"   | sh
+	$ECHO "cp -p ${source_file} ${dest_file}"   | sh
 	if [ $? -eq 0 ]; then
 		$ECHO  "[MESSAGE]	COPY SOURCE FILE:[ ${source_file} ] SUCCESS..."
 	else
