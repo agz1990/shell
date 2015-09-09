@@ -48,6 +48,7 @@ cat  << EOF
 #  2015.09.09	V1.2: 
 		1. 兼容linux echo 无法解析  \n 的问题
 		2. FILE_LIST 忽略全空白行
+		3. 支持通过配置 EXTRA_BACKUP_FILE_LIST 变量来添加需要额外备份的文件。
 #
 # Example     :
 #
@@ -146,6 +147,14 @@ cat <<EOF
 ${FILE_LIST}
 EOF
 }
+
+# 额外的文件列表
+extra_backup_file_list(){ # 此函数不能修改 
+cat <<EOF
+${EXTRA_BACKUP_FILE_LIST}
+EOF
+}
+
 
 
 clean_up(){
@@ -248,7 +257,7 @@ create_process(){
 	cd "${TAR_PACKAGE_TMP_DIR}"
 	
 	$ECHO  "[MESSAGE]	开始打包所有需要更新的文件到:[ ${UPDATE_PACKAGE_NAME} ] ...\n"
-	tar -cvf "${UPDATE_PACKAGE_NAME}" * 
+	tar -cvf "${UPDATE_PACKAGE_NAME}" * | sed -e '/\/$/d'
 	
 	if [ $? -eq 0 ]; then
 		_file_cnt=`tar -tf "${UPDATE_PACKAGE_NAME}" | sed -e '/\/$/d' | wc -l`
@@ -307,8 +316,9 @@ extract_process(){
 	
 	_update_cnt=0
 	_add_cnt=0
+	_extra_backup_cnt=0
 	
-	
+	$ECHO "[MESSAGE]	备份升级包里面的文件: ${TAR_PACKAGE_TMP_DIR}\n"
 	tar -tf ${UPDATE_PACKAGE_NAME} | sed -e '/\/$/d' | while read file; do
 		if [ -f "/$file" ]; then
 			let "_update_cnt += 1"
@@ -320,11 +330,31 @@ extract_process(){
 		fi
 	done
 	
+	$ECHO "\n[MESSAGE]	备份额外备份配置的文件 ...\n"
+	extra_backup_file_list | while read file; do
+		
+		# 过滤掉 # 开头的行和空行
+		file=`echo $file | awk '$0 !~ /^([ \t\r]*#|[ \t\r]*$)/ {print}'`;
+		[ "XX$file" = "XX" ] && continue;
+		
+		if [ -f "${DEST_DIR}${file}" ]; then
+			if [ -f "${TAR_PACKAGE_TMP_DIR}${DEST_DIR}/$file" ]; then
+				$ECHO  "[WARNMING]	额外备份配置的文件:[ /${file} ] 已包含在升级包中..."
+			else
+				let "_extra_backup_cnt += 1"	
+				my_copy "${DEST_DIR}${file}"  "${TAR_PACKAGE_TMP_DIR}${DEST_DIR}/$file"
+			fi
+		else
+			$ECHO  "[ERROR]	额外备份配置的文件:[ ${DEST_DIR}${file} ] 不存在检查是否配置正确..."
+			exit
+		fi
+	done
 	
-	let "_total = _update_cnt + _add_cnt"
+	
+	let "_total = _update_cnt + _add_cnt + _extra_backup_cnt"
 	
 	# 打印总结信息
-	$ECHO  "\n[WARMING]	***  Total(${_total}), Update(${_update_cnt}),  Add(${_add_cnt}) ***\n"
+	$ECHO  "\n[WARMING]	***  Total(${_total}), Update(${_update_cnt}), Add(${_add_cnt}), Extra(${_extra_backup_cnt})  ***\n"
 
 
 	if [ ${_update_cnt} -gt 0 ]; then
@@ -335,7 +365,7 @@ extract_process(){
 		
 		$ECHO  "[MESSAGE]	开始备份所有需要更新的文件到:[ ${BACKUP_PACKAGE_NAME} ] ...\n"
 	
-		tar -cvf ${BACKUP_PACKAGE_NAME} * 
+		tar -cvf ${BACKUP_PACKAGE_NAME} * | sed -e '/\/$/d'
 		
 		if [ $? -eq 0 ]; then
 			_file_cnt=`tar -tf ${BACKUP_PACKAGE_NAME} | sed -e '/\/$/d' | wc -l`
