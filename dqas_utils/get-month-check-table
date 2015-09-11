@@ -1,0 +1,209 @@
+#!/bin/ksh
+
+if [ `uname` = "Linux" ]; then
+	ECHO="echo -e" 
+else
+	ECHO="echo " 
+fi
+
+EGREP="egrep"
+
+
+
+
+help(){
+cat  << EOF
+########################################################################
+# Author      : jigc@cmsz.com
+# Script Name : get-month-check-table
+# Description : 打印月全量检查报表
+# Version     : V1.0
+# Usage       : get-month-check-table [--mo|--extract-mode|--restore-mode] --conf <配置文件地址>
+
+         --conf 指定配置文件的路径，配置文件格式为 工单编号.conf(OO-20150710-00000001.conf)
+		 
+         --create-mod    脚本工作在创建更新包的模式下
+             
+         --extract-mode  脚本工作在更新及备份的模式下(默认仅做备份不做跟新)
+             --excute-override 执行更新动作
+			 
+         --restore-mode  脚本工作在回退的模式下
+
+# Log         :
+#  2015.07.15   V1.0: 实现基本功能 
+#  2015.07.16	V1.1: 完善注释及帮助文档
+#  2015.09.09	V1.2: 
+		1. 兼容linux echo 无法解析  \n 的问题
+		2. FILE_LIST 忽略全空白行
+		3. 支持通过配置 EXTRA_BACKUP_FILE_LIST 变量来添加需要额外备份的文件。
+#
+# Example     :
+#
+#  生成更新包：
+#    package-utils --create-mode --conf /path/to/conffile/OO-20150710-00000001.conf
+#
+#  进行备份：
+#    package-utils  --extract-mode  --conf /path/to/conffile/KR-20150112-11224364.conf 
+#
+#  进行备份后再更新:
+#    package-utils --extract-mode --excute-override  --conf /path/to/conffile/KR-20150112-11224364.conf 
+#
+#  回退：
+#     package-utils  --restore-mode  --conf /path/to/conffile/KR-20150112-11224364.conf 
+#
+########################################################################
+EOF
+
+}
+
+# 测试钩子	./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20150112-11224364.conf 
+
+# 测试2 ./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20140606-14110307.conf
+# 测试打包 ./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# 测试备份 ./package-utils --extract-mode  --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+# 测试备份并升级覆盖 ./package-utils --extract-mode --excute-override --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
+
+# 测试撤销功能 ./package-utils --restore-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf
+
+#获取参数##########################
+
+while [ $# -gt 0 ]; 
+do
+
+	case "$1" in
+	-h)
+		help 
+		exit 0
+		;;
+		
+	--conf)
+		
+		CONFILE_NAME=$2 
+		
+		#获取工单号
+		
+		f=`basename ${CONFILE_NAME}`
+		export ORDER_NAME=`echo $f | sed 's|\.conf||'`
+
+		. $CONFILE_NAME
+		shift 
+		;;
+
+	--create-mode)
+		MODE="CREATE-MODE"
+		;;
+	--extract-mode)
+		MODE="EXTRACT-MODE"
+		 ;;
+	--restore-mode)
+		MODE="RESTORE-MODE"
+		 ;;
+	--excute-override)
+		OVERRIDE_FLAG="YES"
+		;;
+		
+    --)
+		
+		break
+		;;
+    esac
+shift
+done
+
+###################################
+
+getRawResultTable(){
+sqlplus -S /nolog <<EOF
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+set termout off
+SELECT 
+FCV.BIZ_CODE || FCV.PROVINCE_CODE BIZ_PRIVINCE_CODE,
+RET.A_FILE_NAME, RET.B_FILE_NAME, RET.C_FILE_NAME, FCV.COMPARE_TYPE,
+TO_CHAR(RET.CREATE_TIME, 'YYYY-MM-DD#HH24:MI:SS'), RET.COMFORM_RATIO,
+RET.N1, RET.N2, RET.N3, RET.N4, RET.N5, RET.N6, RET.N7, 
+RET.A_REPEAT_RECORD, RET.B_REPEAT_RECORD, RET.C_REPEAT_RECORD,
+RET.A_RECORD_TOTAL, RET.B_RECORD_TOTAL, RET.C_RECORD_TOTAL,'RESULT3'
+FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_THREE_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '201508'
+WHERE COMPARE_WAY = 3 --  and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0082%'
+ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
+/
+EOF
+}
+
+getMonthIncomingTable(){
+sqlplus -S /nolog <<EOF
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+SELECT
+BIZ_CODE || PROVINCE_CODE BIZ_PRIVINCE_CODE,
+FILE_NAME, FILE_SIZE, CKSUM_VALUE, STATE, 
+RESEND_NUM, VALIDITY, TO_CHAR(INCOMING_TIME, 'YYYY-MM-DD#HH24:MI:SS'), 'MONTH_INCOMING'
+FROM MONTH_INCOMING 
+WHERE STTL_DT='201508' -- and BIZ_CODE || PROVINCE_CODE like '0082%'
+ORDER BY BIZ_CODE || PROVINCE_CODE
+/
+EOF
+}
+
+
+# 初始化函数
+init ()
+{
+	 . cfConfigFile.sh
+	 
+	conf_file=${DQAS_HOME}/conf/get-month-check-table.conf
+	if [ ! -f ${conf_file} ];then
+		echo "conf file [${conf_file}] not exist,exit!"
+		exit 1
+	fi
+	
+	MEARGE_RESULT_IMCOMING_TABLE_AWK=${DQAS_HOME}/bin/merge-result-incoiming-table.awk
+	if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
+		echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
+		exit 1
+	fi
+	cfInit ${conf_file} noLock readOnly
+	dbsid=$(cfGetConfigItem common dbsid)
+	dbuser=$(cfGetConfigItem common dbuser)
+	dbpwd=$(cfGetConfigItem common dbpasswd)
+	# {
+		# getRawResultTable
+		# getMonthIncomingTable
+	# } | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
+	
+	getRawResultTable
+	getMonthIncomingTable
+}
+
+init
+exit
+
+#main 入口#################################
+
+case "${MODE}" in
+	
+	"CREATE-MODE")
+		create_process
+		break
+		;;
+	"EXTRACT-MODE")
+		extract_process
+		break
+		;;
+		
+	"RESTORE-MODE")
+		restore_process
+		break
+		;;
+	--|*)
+		help
+		break
+		;;
+esac
