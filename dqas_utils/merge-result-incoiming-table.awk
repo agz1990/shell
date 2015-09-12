@@ -1,5 +1,16 @@
 #!/usr/bin/awk	-f
 
+########################################################################
+# Author      : jigc 
+# Script Name : merge-result-incoming-table.awk
+# Date        : 2015-9-12
+# Description : 将双方，三方结果表与incoming表合并
+# Version     : V1.0
+# Usage       : 
+# Log:
+#
+########################################################################
+
 BEIN{
 	FS="[:space:]+"
 	
@@ -56,14 +67,19 @@ NF == 21 && $0 ~ /RESULT3$/ {
 	C_RECORD_TOTAL		=	$20;
 	
 	
-	# printf("|%s|%41s|%41s|%41s|%19s|%6.2f|%10s|\n",\
-	# BIZ_PRIVINCE_CODE,$2,$3,$4,$6,$7,C_RECORD_TOTAL);
-	
-	RESULT3_ARRAY[BIZ_PRIVINCE_CODE]=sprintf("|%s|%41s|%41s|%41s|%19s|%6.2f|%011s|",\
-	BIZ_PRIVINCE_CODE,A_FILE_NAME,B_FILE_NAME,C_FILE_NAME,CREATE_TIME,COMFORM_RATIO,CREATE_TIME_STAMP);
+	_format="|%s|%41s|%41s|%41s|%19s|%6.2f|%011s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|"
+	RESULT3_ARRAY[BIZ_PRIVINCE_CODE]=sprintf(_format,\
+	BIZ_PRIVINCE_CODE,\
+	A_FILE_NAME,B_FILE_NAME,C_FILE_NAME,\
+	CREATE_TIME,COMFORM_RATIO,CREATE_TIME_STAMP,\
+	N1,N2,N3,N4,N5,N6,N7,\
+	A_REPEAT_RECORD,B_REPEAT_RECORD,C_REPEAT_RECORD,\
+	A_RECORD_TOTAL,B_RECORD_TOTAL,C_RECORD_TOTAL);
 	
 	
 	KEY_ORDER_ARRAY[RESULT3_CNT++] = BIZ_PRIVINCE_CODE;
+	
+	next;
 	
 }
 
@@ -98,7 +114,8 @@ NF == 9 && $0 ~ /MONTH_INCOMING$/ {
 	INDEX_KEY=BIZ_PRIVINCE_CODE"+"MONTH_INCOMING[CNT_KEY]++;
 	MONTH_INCOMING[INDEX_KEY]=sprintf("|%s|%41s|%11d|%11s|%2s|%2s|%2s|%19s|%012s|",\
 	BIZ_PRIVINCE_CODE,FILE_NAME,FILE_SIZE,CKSUM_VALUE,STATE,RESEND_NUM,VALIDITY,INCOMING_TIME,INCOMING_TIME_STAMP);
-
+	
+	next;
 }
 
 END{
@@ -107,10 +124,23 @@ END{
 	__RET3_A_FILE_NAME				=	3;
 	__RET3_B_FILE_NAME				=	4;
 	__RET3_C_FILE_NAME				=	5;
-	__RET3_COMPARE_TYPE				=	6;
-	__RET3_CREATE_TIME				=	7;
+	__RET3_CREATE_TIME				=	6;
+	__RET3_COMFORM_RATIO			=	7;
 	__RET3_CREATE_TIME_STAMP		=	8;
-	__RET3_COMFORM_RATIO			=	9;
+	__RET3_N1						=	9;
+	__RET3_N2						=	10;
+	__RET3_N3						=	11;
+	__RET3_N4						=	12;
+	__RET3_N5						=	13;
+	__RET3_N6						=	14;
+	__RET3_N7						=	15;
+	__RET3_A_REPEAT_RECORD			=	16;
+	__RET3_B_REPEAT_RECORD			=	17;
+	__RET3_C_REPEAT_RECORD			=	18;                                     ;
+	__RET3_A_RECORD_TOTAL			=   19;
+	__RET3_B_RECORD_TOTAL			=   20;
+	__RET3_C_RECORD_TOTAL			=   21;
+	                                     
 	
 	# FOR MONTH_INCOMING
 	__MICM_BIZ_PRIVINCE_CODE		=	2;			
@@ -125,17 +155,19 @@ END{
 	
 	
 	for( _index_number = 0; _index_number < RESULT3_CNT; _index_number ++){
-	
+		
+		A_FLAG	=	"---";
+		B_FLAG	=	"---";
+		C_FLAG	=	"---";
+		
 		_biz_privince_code 	=	KEY_ORDER_ARRAY[_index_number];
 		RET_LINE			=	RESULT3_ARRAY[_biz_privince_code];
 		
-		
-		sub(/\|[^|]*\|$/,"|", RET_LINE);
-		print RET_LINE;
 		split(RESULT3_ARRAY[_biz_privince_code], _RET,"|");
 		CNT_KEY=_biz_privince_code"+CNT";
 		
-		DETAIL_MSG=""
+	
+		MUL_LINE	=	"";
 		for(i = 1; i < MONTH_INCOMING[CNT_KEY]; i++){
 
 			
@@ -144,35 +176,66 @@ END{
 			LINE		=	MONTH_INCOMING[INDEX_KEY];
 			FILE_NAME	=	_ONE_FILE_ROW[__MICM_FILE_NAME];
 			STATE		= 	_ONE_FILE_ROW[__MICM_STATE];
+			
 						
 			INCOMING_CNT ++;
 			INCOMING_TOTAL_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE];
-			
-			if(STATE == 4 || STATE == 6){
-				# print STATE;
-				sub(/\|/,"|#X#", LINE);
-				
+			if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET3_CREATE_TIME_STAMP]){
+				STATE_SYMBLE	=	"# + #"
+			} else if(STATE == 4 || STATE == 6){
+				STATE_SYMBLE	=	"# ! #";
 			} else if(FILE_NAME == _RET[__RET3_A_FILE_NAME]){
-				sub(/\|/,"|#A#", LINE);
+				STATE_SYMBLE	=	"#AAA#";
+				A_FLAG			=	"AAA";
 				INCOMING_VALID_CNT ++;
 				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
 			} else if(FILE_NAME == _RET[__RET3_B_FILE_NAME]) {
-				sub(/\|/,"|#B#", LINE);
+				STATE_SYMBLE	=	"#BBB#";
+				B_FLAG			=	"BBB";
 				INCOMING_VALID_CNT ++;
 				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]				
 			} else if(FILE_NAME == _RET[__RET3_C_FILE_NAME]) {
-				sub(/\|/,"|#C#", LINE);
+				STATE_SYMBLE	=	"#CCC#";
+				C_FLAG			=	"CCC";
 				INCOMING_VALID_CNT ++;
 				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]					
 			} else {
-				sub(/\|/,"|#-#", LINE);
+				STATE_SYMBLE	=	"# - #";
 			}
 			
-			print "\t  "LINE;
+			FILE_DETAIL_OUTPUT_FORMAT="|%s%07s|%41s|%1d|%8.2f(M)|%12s|%19s|\n";
+			LINE=sprintf(FILE_DETAIL_OUTPUT_FORMAT, \
+			STATE_SYMBLE,\
+			_ONE_FILE_ROW[__MICM_BIZ_PRIVINCE_CODE],\
+			_ONE_FILE_ROW[__MICM_FILE_NAME],\
+			_ONE_FILE_ROW[__MICM_STATE],\
+			_ONE_FILE_ROW[__MICM_FILE_SIZE]/1024/1024,\
+			_ONE_FILE_ROW[__MICM_CKSUM_VALUE],\
+			_ONE_FILE_ROW[__MICM_INCOMING_TIME])
+			
+			MUL_LINE	=	MUL_LINE"        "LINE;
 		}
 		
-		print "\n";
-	
+		RESULT3_OUTPUT_FORMAT="|%s%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|\n";
+		if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
+			VALID_RESULT	=	"%"
+		}else{
+			VALID_RESULT	=	"-"
+		}
+
+		if(_RET[__RET3_COMFORM_RATIO] >= 90){
+			VALID_RATIO 	=	"%"
+		}else {
+			VALID_RATIO 	=	"-"
+		}
+		
+		printf(RESULT3_OUTPUT_FORMAT, \
+		VALID_RESULT,VALID_RATIO,\
+		_RET[__RET3_BIZ_PRIVINCE_CODE],_RET[__RET3_COMFORM_RATIO],\
+		A_FLAG,B_FLAG,C_FLAG,\
+		_RET[__RET3_CREATE_TIME])
+		sort MUL_LINE
+		print MUL_LINE # | "sort -t '|' -k 7" | 
 	}
 
 	printf ("\n *** INCOMING_CNT: %d   INCOMING_VALID_CNT: %d  INCOMING_TOTAL_SIZE: %6.2f (G)  INCOMING_VALID_SIZE: %6.2f (G)  ***\n\n",
