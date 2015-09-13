@@ -18,7 +18,7 @@ cat  << EOF
 # Script Name : get-month-check-table
 # Description : 打印月全量检查报表
 # Version     : V1.0
-# Usage       : get-month-check-table [--mo|--extract-mode|--restore-mode] --conf <配置文件地址>
+# Usage       : get-month-check-table [--mo|--extract-mode|--restore-mode] 
 
          --conf 指定配置文件的路径，配置文件格式为 工单编号.conf(OO-20150710-00000001.conf)
 		 
@@ -31,11 +31,7 @@ cat  << EOF
 
 # Log         :
 #  2015.07.15   V1.0: 实现基本功能 
-#  2015.07.16	V1.1: 完善注释及帮助文档
-#  2015.09.09	V1.2: 
-		1. 兼容linux echo 无法解析  \n 的问题
-		2. FILE_LIST 忽略全空白行
-		3. 支持通过配置 EXTRA_BACKUP_FILE_LIST 变量来添加需要额外备份的文件。
+# 
 #
 # Example     :
 #
@@ -55,15 +51,9 @@ cat  << EOF
 EOF
 
 }
+# 测试用
+# | egrep --color "(^\||#[ABC -]#)0022951" 
 
-# 测试钩子	./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20150112-11224364.conf 
-
-# 测试2 ./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/KR-20140606-14110307.conf
-# 测试打包 ./package-utils --create-mode --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
-# 测试备份 ./package-utils --extract-mode  --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
-# 测试备份并升级覆盖 ./package-utils --extract-mode --excute-override --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf 
-
-# 测试撤销功能 ./package-utils --restore-mode   --conf /home/mcb3user/jigc/shell/update_tools/conf/OO-20150710-00000001.conf
 
 #获取参数##########################
 
@@ -112,7 +102,7 @@ done
 
 ###################################
 
-getRawResultTable(){
+getRawResult3Table(){
 sqlplus -S /nolog <<EOF
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
@@ -133,6 +123,11 @@ ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
 /
 EOF
 }
+
+getRawResult2Table(){
+	return
+}
+
 
 getMonthIncomingTable(){
 sqlplus -S /nolog <<EOF
@@ -174,15 +169,20 @@ init ()
 	dbuser=$(cfGetConfigItem common dbuser)
 	dbpwd=$(cfGetConfigItem common dbpasswd)
 	# {
-		# getRawResultTable
+		# getRawResult3Table
 		# getMonthIncomingTable
 	# } | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
 	
-	getRawResultTable
+	getRawResult3Table
 	getMonthIncomingTable
 }
+if [ `whoami` = 'root' ];then
+	MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
+	cat raw.txt | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
+else
+	init
+fi
 
-init
 exit
 
 #main 入口#################################

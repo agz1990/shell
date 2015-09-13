@@ -164,7 +164,6 @@ END{
 		C_FLAG	=	"---";
 		
 		_biz_privince_code 	=	KEY_ORDER_ARRAY[_index_number];
-		RET_LINE			=	RESULT3_ARRAY[_biz_privince_code];
 		
 		split(RESULT3_ARRAY[_biz_privince_code], _RET,"|");
 		CNT_KEY=_biz_privince_code"+CNT";
