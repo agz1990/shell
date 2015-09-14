@@ -77,6 +77,9 @@ NF == 21 && $0 ~ /RESULT3$/ {
 	
 	# Ê±¼ä×Ö·û´® 2015-08-25#19:11:00
 	CREATE_TIME			=	$6;
+	if(match(CREATE_TIME,"NULL")){
+		CREATE_TIME = "2000-01-01#00:00:00";
+	}
 	_timstr=CREATE_TIME;
 	gsub(/[#:-]/," ", _timstr);
 	CREATE_TIME_STAMP=mktime(_timstr);
@@ -183,31 +186,32 @@ END{
 						
 			INCOMING_CNT ++;
 			INCOMING_TOTAL_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE];
-			if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET3_CREATE_TIME_STAMP]){
+			if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET3_CREATE_TIME_STAMP] && \
+			! match(_RET[__RET3_A_FILE_NAME],"NULL")){
 				HAVE_FURDER		=	1;
-				STATE_SYMBLE	=	"# + #"
+				STATE_SYMBLE	=	" + "
 			} else if(STATE == 4 || STATE == 6){
-				STATE_SYMBLE	=	"# ! #";
+				STATE_SYMBLE	=	" ! ";
 			} else if(FILE_NAME == _RET[__RET3_A_FILE_NAME]){
-				STATE_SYMBLE	=	"#AAA#";
+				STATE_SYMBLE	=	"AAA";
 				A_FLAG			=	"AAA";
 				INCOMING_VALID_CNT ++;
 				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
 			} else if(FILE_NAME == _RET[__RET3_B_FILE_NAME]) {
-				STATE_SYMBLE	=	"#BBB#";
+				STATE_SYMBLE	=	"BBB";
 				B_FLAG			=	"BBB";
 				INCOMING_VALID_CNT ++;
 				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]				
 			} else if(FILE_NAME == _RET[__RET3_C_FILE_NAME]) {
-				STATE_SYMBLE	=	"#CCC#";
+				STATE_SYMBLE	=	"CCC";
 				C_FLAG			=	"CCC";
 				INCOMING_VALID_CNT ++;
 				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]					
 			} else {
-				STATE_SYMBLE	=	"# - #";
+				STATE_SYMBLE	=	" - ";
 			}
 			
-			FILE_DETAIL_OUTPUT_FORMAT="|%s%07s|%41s|%1d|%8.2f(M)|%12s|%19s|ICF|\n";
+			FILE_DETAIL_OUTPUT_FORMAT="|%s|%07s|%41s|%1d|%8.2f(M)|%12s|%19s|MI|\n";
 			LINE=sprintf(FILE_DETAIL_OUTPUT_FORMAT, \
 			STATE_SYMBLE,\
 			_ONE_FILE_ROW[__MICM_BIZ_PRIVINCE_CODE],\
@@ -217,10 +221,10 @@ END{
 			_ONE_FILE_ROW[__MICM_CKSUM_VALUE],\
 			_ONE_FILE_ROW[__MICM_INCOMING_TIME])
 			
-			MUL_LINE	=	MUL_LINE"       "LINE;
+			MUL_LINE	=	MUL_LINE"         "LINE;
 		}
 		
-		RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|3WAY|\n";
+		RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|M3|\n";
 		if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
 			VALID_RESULT	=	"%"
 		}else{
@@ -243,7 +247,7 @@ END{
 		
 		
 		printf(RESULT3_OUTPUT_FORMAT, \
-		VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
+		VALID_RESULT"|"VALID_RATIO"|"FURDER_RESULT,\
 		_RET[__RET3_BIZ_PRIVINCE_CODE],_RET[__RET3_COMFORM_RATIO],\
 		A_FLAG,B_FLAG,C_FLAG,\
 		_RET[__RET3_CREATE_TIME],\

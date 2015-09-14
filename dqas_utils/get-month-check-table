@@ -55,51 +55,60 @@ EOF
 # | egrep --color "(^\||#[ABC -]#)0022951" 
 
 
+
 #获取参数##########################
-
-while [ $# -gt 0 ]; 
+ARGS=`getopt -a -o m:d:h -l exclude:help -- "$@"`
+#[ $? -ne 0 ] && usage
+#set -- "${ARGS}"
+eval set -- "${ARGS}"
+while true
 do
+    case "$1" in
+    -r)
+	    SVNLOG="$2"
+        shift
+        ;;
 
-	case "$1" in
-	-h)
-		help 
+    -d|--exclude)
+        EXCLUDE_PATTERN="^$2$"
+        shift
+		;;
+	-h|--help)
+		help | awk  -F"{cmd}[ ]*" \
+		'NF==2{printf("%s命令: \033[32m%s\033[0m\n",$1,$2);next};{print}'\
+		|  awk  -F"{warn}[ ]*" 'NF==2{printf("%s\033[31m注意: %s\033[0m\n",$1,$2);next};{print}'
 		exit 0
 		;;
-		
-	--conf)
-		
-		CONFILE_NAME=$2 
-		
-		#获取工单号
-		
-		f=`basename ${CONFILE_NAME}`
-		export ORDER_NAME=`echo $f | sed 's|\.conf||'`
-
-		. $CONFILE_NAME
-		shift 
-		;;
-
-	--create-mode)
-		MODE="CREATE-MODE"
-		;;
-	--extract-mode)
-		MODE="EXTRACT-MODE"
-		 ;;
-	--restore-mode)
-		MODE="RESTORE-MODE"
-		 ;;
-	--excute-override)
-		OVERRIDE_FLAG="YES"
-		;;
-		
     --)
+		until [ -z "$2" ]; do
+			[ $(echo "$2" | head -c1) = "-" ] && break
+			
+			dirName=$(echo "$2" | sed -e 's|/$||g')
+
+			if [ -z "$DIR_LIST" ]; then
+				DIR_LIST=$dirName
+				DEST_DIR_PATTERN=$DIR_LIST
+			else
+				mulDir="yes"
+				DIR_LIST=$DIR_LIST'|'$dirName;
+			fi
+			shift
+		done
+		
+		# 多目录处理逻辑
+		if [ "$mulDir" = "yes" ]; then
+			DEST_DIR_PATTERN="^(${DIR_LIST})/"
+		elif [ ! -z "$DEST_DIR_PATTERN" ]; then
+			DEST_DIR_PATTERN="^${DIR_LIST}/"
+		else 
+			DEST_DIR_PATTERN=""
+		fi
 		
 		break
 		;;
     esac
 shift
 done
-
 ###################################
 
 getRawResult3Table(){
@@ -110,6 +119,7 @@ set heading off
 set linesize 1000
 set pages 0
 set termout off
+set null NULL
 SELECT 
 FCV.BIZ_CODE || FCV.PROVINCE_CODE BIZ_PRIVINCE_CODE,
 RET.A_FILE_NAME, RET.B_FILE_NAME, RET.C_FILE_NAME, FCV.COMPARE_TYPE,
@@ -118,7 +128,7 @@ RET.N1, RET.N2, RET.N3, RET.N4, RET.N5, RET.N6, RET.N7,
 RET.A_REPEAT_RECORD, RET.B_REPEAT_RECORD, RET.C_REPEAT_RECORD,
 RET.A_RECORD_TOTAL, RET.B_RECORD_TOTAL, RET.C_RECORD_TOTAL,'RESULT3'
 FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_THREE_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '201508'
-WHERE COMPARE_WAY = 3 --  and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0082%'
+WHERE COMPARE_WAY = 3  -- and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0082%'
 ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
 /
 EOF
@@ -142,7 +152,7 @@ FILE_NAME, FILE_SIZE, CKSUM_VALUE, STATE,
 RESEND_NUM, VALIDITY, TO_CHAR(INCOMING_TIME, 'YYYY-MM-DD#HH24:MI:SS'), 'MONTH_INCOMING'
 FROM MONTH_INCOMING 
 WHERE STTL_DT='201508' -- and BIZ_CODE || PROVINCE_CODE like '0082%'
-ORDER BY BIZ_CODE || PROVINCE_CODE
+ORDER BY INCOMING_TIME
 /
 EOF
 }
@@ -159,7 +169,8 @@ init ()
 		exit 1
 	fi
 	
-	MEARGE_RESULT_IMCOMING_TABLE_AWK=${DQAS_HOME}/bin/merge-result-incoiming-table.awk
+	# MEARGE_RESULT_IMCOMING_TABLE_AWK=${DQAS_HOME}/bin/merge-result-incoiming-table.awk
+	MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
 	if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
 		echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
 		exit 1
@@ -168,13 +179,15 @@ init ()
 	dbsid=$(cfGetConfigItem common dbsid)
 	dbuser=$(cfGetConfigItem common dbuser)
 	dbpwd=$(cfGetConfigItem common dbpasswd)
-	# {
-		# getRawResult3Table
-		# getMonthIncomingTable
-	# } | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
+	# dbpwd=`getdbpwd ${dbuser}`
 	
-	getRawResult3Table
-	getMonthIncomingTable
+	{
+		getRawResult3Table
+		getMonthIncomingTable
+	} | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
+	
+	# getRawResult3Table
+	# getMonthIncomingTable
 }
 if [ `whoami` = 'root' ];then
 	MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk

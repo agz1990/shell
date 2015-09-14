@@ -21,75 +21,109 @@ BEGIN{
 	
 }
 
-/\|[23]WAY\|$/ { 
+/\|M[23]\|$/ { 
 	if(WAITING_FILES_FLAG || UNPASS3WAY_FLAG || NEW_COMING_FLAG){
 		WAITING_FILES_FLAG	= 0;
 		NEW_COMING_FLAG		= 0;
 		UNPASS3WAY_FLAG		= 0;
 		
+		printf("%s\n",CURRENT_RESULT);
+		
+		if(A_FILE_ROW) printf("%s\n",A_FILE_ROW); 
+		if(B_FILE_ROW) printf("%s\n",B_FILE_ROW); 
+		if(C_FILE_ROW) printf("%s\n",C_FILE_ROW); 
+		
+		
 		printf("%s",SHOW_LINES);
 		
 	}
 	
+	HAVE_RESULT_FLAG	=	$2 == "%" ? 1 : 0;
+	RESULT3_PASS_FLAG	=	$3 == "%" ? 1 : 0;
+	HAVE_FURTER_FLAG	=	$4 == "%" ? 1 : 0;
+	
 	CURRENT_RESULT = $0;
 	CURRENT_COMPARE_TYPE = $(NF-2)
-	SHOW_LINES = $0"\n";
+	SHOW_LINES = "";
+	A_FILE_ROW = "";
+	B_FILE_ROW = "";
+	C_FILE_ROW = "";
 	
 	ALL_RESULT++;
 	
-	if(match($2,/%%/)) { PASS3WAY++;}
-	else if (match($2,/%-/)) { UNPASS3WAY++;}
-	else if (match($2,/--/)) { WAITING_FILES++;}
+	if(HAVE_RESULT_FLAG && RESULT3_PASS_FLAG) { PASS3WAY++;}
+	else if (HAVE_RESULT_FLAG && ! RESULT3_PASS_FLAG) { UNPASS3WAY++;}
+	else if (! HAVE_RESULT_FLAG && ! RESULT3_PASS_FLAG) { WAITING_FILES++;}
 	
 	
-	if(match($2,"^--[-%]")){
+	if(!HAVE_RESULT_FLAG){
 		WAITING_FILES_FLAG	= 	1;
-	} else if(match($2,"^%-[-%]")){
+	} else if(!RESULT3_PASS_FLAG){
 		UNPASS3WAY_FLAG 	=	1;
 	} 
 }
 
-/\|ICF\|$/{
+/\|MI\|$/{
 	ONEROW	=	$0;
-	if(UNPASS3WAY_FLAG){
-		if(match(ONEROW,/#AAA#.*\|ICF\|$/)){
-			# TODO åˆ¤æ–­ taskman æ˜¯å¦é‡å¯è¿‡ï¼Œå¦‚æžœé‡å¯æ—¶é—´åœ¨ç»“æžœæ—¶é—´ä¹‹å‰åˆ™éœ€å‘€å…¨éƒ¨æ‹·è´è¿›è¡Œé‡è·‘ 
-			
-		} else if(match(ONEROW,/#BBB#.*\|ICF\|$/)){
-			sub(/ \|/,"*|", ONEROW); 
-		} else if(match(ONEROW,/#CCC#.*\|ICF\|$/)){
-		
-		}  else if(match(ONEROW,/# + #.*\|ICF\|$/)){
+	STATE_SYMBLE = $2;
+	if(UNPASS3WAY_FLAG || RESULT3_PASS_FLAG){
+		if(STATE_SYMBLE == "AAA"){
+			# TODO ÅÐ¶Ï taskman ÊÇ·ñÖØÆô¹ý£¬Èç¹ûÖØÆôÊ±¼äÔÚ½á¹ûÊ±¼äÖ®Ç°ÔòÐèÑ½È«²¿¿½±´½øÐÐÖØÅÜ 
+			A_FILE_ROW = ONEROW;
+			next;
+		} else if(STATE_SYMBLE == "BBB"){
+			if(UNPASS3WAY_FLAG) sub(/ \|/,"R|", ONEROW); 
+			B_FILE_ROW = ONEROW;
+			next;
+		} else if(STATE_SYMBLE == "CCC"){
+			C_FILE_ROW = ONEROW;
+			next;
+		}  else if(STATE_SYMBLE == " + "){
 		
 		}
 	
 	} else if(WAITING_FILES_FLAG){
-		if(match(ONEROW,/# - #.*\|ICF\|$/)){
+		if(STATE_SYMBLE == " - "){
 			_str=CURRENT_COMPARE_TYPE
 			gsub(/_/,".*", _str); 
 			# print _str
 			split(_str,_ARR, "+");
 			TYPE	=	"#";
 			# print _ARR[1],_ARR[2],_ARR[3]
-				 if(match(ONEROW,_ARR[1])){TYPE="A"}
-			else if(match(ONEROW,_ARR[2])){TYPE="B"}
-			else if(match(ONEROW,_ARR[3])){TYPE="C"}
-
-			
-			sub(/ \|# - #/,"+|# "TYPE" #", ONEROW); 
+			if(match(ONEROW,_ARR[1]))
+			{
+				TYPE="A";
+				A_FILE_ROW = ONEROW;
+				sub(/ \| - \|/,"U| "TYPE" |", ONEROW); 
+				next;	
+			} else if(match(ONEROW,_ARR[2]))
+			{
+				TYPE="B"
+				B_FILE_ROW = ONEROW;
+				sub(/ \| - \|/,"U| "TYPE" |", ONEROW); 
+				next;	
+			}
+			else if(match(ONEROW,_ARR[3]))
+			{
+				TYPE="C";
+				B_FILE_ROW = ONEROW;
+				sub(/ \| - \|/,"U| "TYPE" |", ONEROW); 
+				next;		
+			}
 		} 
 	}
 
-	if(match(ONEROW,/# \+ #/)){
+	if(STATE_SYMBLE == " + "){
 		HAVE_FURDER++;
 		NEW_COMING_FLAG	= 1;
-		sub(/ \|/,"%|", ONEROW);
+		sub(/ \|/,"N|", ONEROW);
 	}
+	
 	SHOW_LINES	=	SHOW_LINES""ONEROW"\n";
 
 }
 
 END{	
-	printf("*** æ€»ç»“æžœæ•°ï¼š %d   ä¸‰æ–¹é€šè¿‡ï¼š %d   ä¸‰æ–¹æœªé€šè¿‡ï¼š %d   ä¸‰æ–¹æ–‡ä»¶æœªåˆ°é½ï¼š %d   ä¸‰æ–¹æœ‰æ–°æ–‡ä»¶æœªå¤„ç†ï¼š %d  ***\n",\
+	printf("*** ×Ü½á¹ûÊý£º %d   Èý·½Í¨¹ý£º %d   Èý·½Î´Í¨¹ý£º %d   Èý·½ÎÄ¼þÎ´µ½Æë£º %d   Èý·½ÓÐÐÂÎÄ¼þÎ´´¦Àí£º %d  ***\n",\
 	ALL_RESULT,PASS3WAY,UNPASS3WAY,WAITING_FILES,HAVE_FURDER);
 }
