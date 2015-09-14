@@ -257,7 +257,7 @@ create_process(){
 	cd "${TAR_PACKAGE_TMP_DIR}"
 	
 	$ECHO  "[MESSAGE]	开始打包所有需要更新的文件到:[ ${UPDATE_PACKAGE_NAME} ] ...\n"
-	tar -cvf "${UPDATE_PACKAGE_NAME}" * | sed -e '/\/$/d'
+	find . -type f | xargs tar -cvf "${UPDATE_PACKAGE_NAME}"  
 	
 	if [ $? -eq 0 ]; then
 		_file_cnt=`tar -tf "${UPDATE_PACKAGE_NAME}" | sed -e '/\/$/d' | wc -l`
@@ -365,7 +365,7 @@ extract_process(){
 		
 		$ECHO  "[MESSAGE]	开始备份所有需要更新的文件到:[ ${BACKUP_PACKAGE_NAME} ] ...\n"
 	
-		tar -cvf ${BACKUP_PACKAGE_NAME} * | sed -e '/\/$/d'
+		find . -type f | xargs tar -cvf ${BACKUP_PACKAGE_NAME} 
 		
 		if [ $? -eq 0 ]; then
 			_file_cnt=`tar -tf ${BACKUP_PACKAGE_NAME} | sed -e '/\/$/d' | wc -l`
@@ -383,6 +383,7 @@ extract_process(){
 		
 		$ECHO "[MESSAGE]	开始更新文件..."
 		$ECHO "[MESSAGE]	将更新压缩包:[ ${UPDATE_PACKAGE_NAME} ] 解压...\n"
+		
 		cd /
 		tar -xvf ${UPDATE_PACKAGE_NAME} 
 		if [ $? -eq 0 ]; then
@@ -461,6 +462,7 @@ restore_process(){
 	$ECHO
 	$ECHO "[MESSAGE]	开始进行还原 ..."
 	$ECHO "[MESSAGE]	将更新压缩包:[ ${BACKUP_PACKAGE_NAME} ] 解压...\n"
+
 	cd /
 	tar -xvf ${BACKUP_PACKAGE_NAME} 
 	if [ $? -eq 0 ]; then
