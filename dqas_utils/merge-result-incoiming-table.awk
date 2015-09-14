@@ -20,6 +20,21 @@ BEGIN{
 	
 	
 	
+	# FORC RESULT2_ARRAY
+	__RET2_BIZ_PRIVINCE_CODE		=	2;
+	__RET2_L_FILE_NAME				=	3;
+	__RET2_R_FILE_NAME				=	4;
+	__RET2_COMPARE_TYPE				=	5;
+	__RET2_CREATE_TIME				=	6;
+	__RET2_COMFORM_RATIO			=	7;
+	__RET2_CREATE_TIME_STAMP		=	8;
+	__RET2_L_UNMATCH				=	9;
+	__RET2_R_UNMATCH				=	10;
+	__RET2_L_REPEAT_RECORD			=	11;
+	__RET2_R_REPEAT_RECORD			=	12;
+	__RET2_L_RECORD_TOTAL			=   13;
+	__RET2_R_RECORD_TOTAL			=   14;
+	
 	# FOR RESULT3_ARRAY
 	__RET3_BIZ_PRIVINCE_CODE		=	2;
 	__RET3_A_FILE_NAME				=	3;
@@ -54,6 +69,66 @@ BEGIN{
 	__MICM_VALIDITY                 =	8;
 	__MICM_INCOMING_TIME            =	9;
 	__MICM_INCOMING_TIME_STAMP		=	10;
+	
+}
+
+
+NF == 13 && $0 ~ /RESULT2$/ {
+	
+	
+	# 0005100
+	BIZ_PRIVINCE_CODE	=	$1;
+	
+	# FLAT_20150815010000_0005100.0002241498.gz
+	L_FILE_NAME			=	$2;
+	
+	# BOSS_20150815010000_0005100.0002216201.gz
+	R_FILE_NAME			=	$3;
+	
+	# 对比类型 FLAT_0005+BOSS_0005+VGOP_0005
+	COMPARE_TYPE		=	$4;
+	
+	# 时间字符串 2015-08-25#19:11:00
+	CREATE_TIME			=	$5;
+	if(match(CREATE_TIME,"NULL")){
+		CREATE_TIME = "2000-01-01#00:00:00";
+	}
+	_timstr=CREATE_TIME;
+	gsub(/[#:-]/," ", _timstr);
+	CREATE_TIME_STAMP=mktime(_timstr);
+	
+	# 正确率
+	COMFORM_RATIO		=	$6;
+	
+	# LEFT_UNMATCH,RIGHT_UNMATCH
+	L_UNMATCH		=	$7;
+	R_UNMATCH		=	$8;
+
+	
+	# 重复记录数
+	L_REPEAT_RECORD	=	$9;
+	R_REPEAT_RECORD	=	$10;
+	
+	
+	# 文件记录总数
+	L_RECORD_TOTAL		=	$11;
+	R_RECORD_TOTAL		=	$12;
+
+	
+	
+	_format="|%s|%41s|%41s|%s|%19s|%6.2f|%011s|%s|%s|%s|"
+	RESULT2_ARRAY[BIZ_PRIVINCE_CODE]=sprintf(_format,\
+	BIZ_PRIVINCE_CODE,\
+	L_FILE_NAME,R_FILE_NAME,COMPARE_TYPE,\
+	CREATE_TIME,COMFORM_RATIO,CREATE_TIME_STAMP,\
+	L_UNMATCH"|"R_UNMATCH,\
+	L_REPEAT_RECORD"|"R_REPEAT_RECORD,\
+	L_RECORD_TOTAL"|"R_RECORD_TOTAL);
+	
+	# print RESULT2_ARRAY[BIZ_PRIVINCE_CODE]
+	KEY_ORDER2_ARRAY[RESULT2_CNT++] = BIZ_PRIVINCE_CODE;
+	
+	next;
 	
 }
 
@@ -107,7 +182,7 @@ NF == 21 && $0 ~ /RESULT3$/ {
 	C_RECORD_TOTAL		=	$20;
 	
 	
-	_format="|%s|%41s|%41s|%41s|%s|%19s|%6.2f|%011s|%d|%d|%d|"
+	_format="|%s|%41s|%41s|%41s|%s|%19s|%6.2f|%011s|%s|%s|%s|"
 	RESULT3_ARRAY[BIZ_PRIVINCE_CODE]=sprintf(_format,\
 	BIZ_PRIVINCE_CODE,\
 	A_FILE_NAME,B_FILE_NAME,C_FILE_NAME,COMPARE_TYPE,\
@@ -117,11 +192,12 @@ NF == 21 && $0 ~ /RESULT3$/ {
 	A_RECORD_TOTAL"|"B_RECORD_TOTAL"|"C_RECORD_TOTAL);
 	
 	
-	KEY_ORDER_ARRAY[RESULT3_CNT++] = BIZ_PRIVINCE_CODE;
+	KEY_ORDER3_ARRAY[RESULT3_CNT++] = BIZ_PRIVINCE_CODE;
 	
 	next;
 	
 }
+
 
 NF == 9 && $0 ~ /MONTH_INCOMING$/ {
 	BIZ_PRIVINCE_CODE	=	$1;
@@ -159,6 +235,94 @@ NF == 9 && $0 ~ /MONTH_INCOMING$/ {
 }
 
 END{
+	for( _index_number = 0; _index_number < RESULT2_CNT; _index_number ++){
+		
+		L_FLAG	=	"---";
+		R_FLAG	=	"---";
+		
+		
+		_biz_privince_code 	=	KEY_ORDER2_ARRAY[_index_number];
+		
+		split(RESULT2_ARRAY[_biz_privince_code], _RET,"|");
+		CNT_KEY=_biz_privince_code"+CNT";
+		
+	
+		MUL_LINE	=	"";
+		HAVE_FURDER	=	0;
+		for(i = 1; i < MONTH_INCOMING[CNT_KEY]; i++){
+
+			
+			INDEX_KEY	=	_biz_privince_code"+"i;
+			split(MONTH_INCOMING[INDEX_KEY], _ONE_FILE_ROW,"|");
+			LINE		=	MONTH_INCOMING[INDEX_KEY];
+			FILE_NAME	=	_ONE_FILE_ROW[__MICM_FILE_NAME];
+			STATE		= 	_ONE_FILE_ROW[__MICM_STATE];
+			
+						
+			INCOMING_CNT ++;
+			INCOMING_TOTAL_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE];
+			if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET2_CREATE_TIME_STAMP] && \
+			! match(_RET[__RET2_L_FILE_NAME],"NULL")){
+				HAVE_FURDER		=	1;
+				STATE_SYMBLE	=	" + "
+			} else if(STATE == 4 || STATE == 6){
+				STATE_SYMBLE	=	" ! ";
+			} else if(FILE_NAME == _RET[__RET2_L_FILE_NAME]){
+				STATE_SYMBLE	=	"LLL";
+				L_FLAG			=	"LLL";
+				INCOMING_VALID_CNT ++;
+				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
+			} else if(FILE_NAME == _RET[__RET2_R_FILE_NAME]) {
+				STATE_SYMBLE	=	"RRR";
+				R_FLAG			=	"RRR";
+				INCOMING_VALID_CNT ++;
+				INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
+			}  else {
+				STATE_SYMBLE	=	" - ";
+			}
+			
+			FILE_DETAIL_OUTPUT_FORMAT="|%s|%07s|%41s|%1d|%8.2f(M)|%12s|%19s|MI|\n";
+			LINE=sprintf(FILE_DETAIL_OUTPUT_FORMAT, \
+			STATE_SYMBLE,\
+			_ONE_FILE_ROW[__MICM_BIZ_PRIVINCE_CODE],\
+			_ONE_FILE_ROW[__MICM_FILE_NAME],\
+			_ONE_FILE_ROW[__MICM_STATE],\
+			_ONE_FILE_ROW[__MICM_FILE_SIZE]/1024/1024,\
+			_ONE_FILE_ROW[__MICM_CKSUM_VALUE],\
+			_ONE_FILE_ROW[__MICM_INCOMING_TIME])
+			
+			MUL_LINE	=	MUL_LINE"         "LINE;
+		}
+		
+		RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|M2|\n";
+		if(L_FLAG == "LLL" && R_FLAG == "RRR"){
+			VALID_RESULT	=	"%"
+		}else{
+			HAVE_FURDER		=	0; # 三方文件未到齐，没有未处理文件的概念
+			VALID_RESULT	=	"-"
+		}
+		
+		if(VALID_RESULT == "%" && _RET[__RET2_COMFORM_RATIO] >= 90){
+			VALID_RATIO 	=	"%"
+		} else {
+			VALID_RATIO 	=	"-"
+		}
+		
+		if(HAVE_FURDER){
+			FURDER_RESULT	=	"-";
+		} else {
+			FURDER_RESULT	=	"%";
+		}
+		
+		printf(RESULT2_OUTPUT_FORMAT, \
+		VALID_RESULT"|"VALID_RATIO"|"FURDER_RESULT,\
+		_RET[__RET2_BIZ_PRIVINCE_CODE],_RET[__RET2_COMFORM_RATIO],\
+		L_FLAG,R_FLAG,"---",\
+		_RET[__RET2_CREATE_TIME],\
+		_RET[__RET2_COMPARE_TYPE]);
+		sort MUL_LINE
+		print MUL_LINE # | "sort -t '|' -k 7" | 
+	}
 
 	for( _index_number = 0; _index_number < RESULT3_CNT; _index_number ++){
 		
@@ -166,7 +330,7 @@ END{
 		B_FLAG	=	"---";
 		C_FLAG	=	"---";
 		
-		_biz_privince_code 	=	KEY_ORDER_ARRAY[_index_number];
+		_biz_privince_code 	=	KEY_ORDER3_ARRAY[_index_number];
 		
 		split(RESULT3_ARRAY[_biz_privince_code], _RET,"|");
 		CNT_KEY=_biz_privince_code"+CNT";
@@ -243,8 +407,6 @@ END{
 		} else {
 			FURDER_RESULT	=	"%";
 		}
-		
-		
 		
 		printf(RESULT3_OUTPUT_FORMAT, \
 		VALID_RESULT"|"VALID_RATIO"|"FURDER_RESULT,\

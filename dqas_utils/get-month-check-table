@@ -8,6 +8,7 @@ fi
 
 EGREP="egrep"
 
+CMD_LINE="$0 $*"
 
 
 
@@ -57,54 +58,52 @@ EOF
 
 
 #获取参数##########################
-ARGS=`getopt -a -o m:d:h -l exclude:help -- "$@"`
+# ARGS=`getopt -a -o m:h -l raw-output:raw-input:force:help -- "$@"`
 #[ $? -ne 0 ] && usage
 #set -- "${ARGS}"
-eval set -- "${ARGS}"
-while true
+# eval set -- "${ARGS}"
+# while true
+while [ $# -gt 0 ]; 
 do
     case "$1" in
-    -r)
-	    SVNLOG="$2"
+    -m)
+	    MONTH="$2"
         shift
         ;;
-
-    -d|--exclude)
-        EXCLUDE_PATTERN="^$2$"
+		
+	# --raw-output)
+	    # RAW_OUTPUT_FILE="$2"
+        # shift
+        # ;;
+		
+	--raw-input)
+		IGNORE_MONTH="YES";
+	    RAW_INPUT_FILE="$2"
+		
+		[ ! -f "${RAW_INPUT_FILE}" ] && $ECHO  "[ERROR]		输入文件[ ${RAW_INPUT_FILE} ]不存在 ..." &&  exit
+		file_name=`basename ${RAW_INPUT_FILE}`;
+		# month_raw_output_201509.20150914154719"
+		# echo month_raw_output_201509.20150914154719  | sed -e 's/.*_\([0-9]*\)\..*/\1/p'
+		RAW_INPUT_FILE_MONTH=`echo ${file_name}  | sed -e 's/.*_\([0-9]*\)\..*/\1/p'`
+		
+        shift
+        ;;
+	--redo-output)
+	    REDO_OUTPUT_FILE="$2"
+        shift
+        ;;
+    --force)
+        FORCE_PATTERN="^$2$"
         shift
 		;;
+		
 	-h|--help)
-		help | awk  -F"{cmd}[ ]*" \
-		'NF==2{printf("%s命令: \033[32m%s\033[0m\n",$1,$2);next};{print}'\
-		|  awk  -F"{warn}[ ]*" 'NF==2{printf("%s\033[31m注意: %s\033[0m\n",$1,$2);next};{print}'
-		exit 0
+		help
+		exit
 		;;
+		
     --)
-		until [ -z "$2" ]; do
-			[ $(echo "$2" | head -c1) = "-" ] && break
-			
-			dirName=$(echo "$2" | sed -e 's|/$||g')
-
-			if [ -z "$DIR_LIST" ]; then
-				DIR_LIST=$dirName
-				DEST_DIR_PATTERN=$DIR_LIST
-			else
-				mulDir="yes"
-				DIR_LIST=$DIR_LIST'|'$dirName;
-			fi
-			shift
-		done
-		
-		# 多目录处理逻辑
-		if [ "$mulDir" = "yes" ]; then
-			DEST_DIR_PATTERN="^(${DIR_LIST})/"
-		elif [ ! -z "$DEST_DIR_PATTERN" ]; then
-			DEST_DIR_PATTERN="^${DIR_LIST}/"
-		else 
-			DEST_DIR_PATTERN=""
-		fi
-		
-		break
+		break;
 		;;
     esac
 shift
@@ -112,7 +111,9 @@ done
 ###################################
 
 getRawResult3Table(){
-sqlplus -S /nolog <<EOF
+	_month=$1;
+	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
 set heading off
@@ -127,7 +128,7 @@ TO_CHAR(RET.CREATE_TIME, 'YYYY-MM-DD#HH24:MI:SS'), RET.COMFORM_RATIO,
 RET.N1, RET.N2, RET.N3, RET.N4, RET.N5, RET.N6, RET.N7, 
 RET.A_REPEAT_RECORD, RET.B_REPEAT_RECORD, RET.C_REPEAT_RECORD,
 RET.A_RECORD_TOTAL, RET.B_RECORD_TOTAL, RET.C_RECORD_TOTAL,'RESULT3'
-FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_THREE_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '201508'
+FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_THREE_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '${_month}'
 WHERE COMPARE_WAY = 3  -- and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0082%'
 ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
 /
@@ -135,12 +136,35 @@ EOF
 }
 
 getRawResult2Table(){
-	return
+	_month=$1;
+	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量双方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+set termout off
+set null NULL
+SELECT 
+FCV.BIZ_CODE || FCV.PROVINCE_CODE BIZ_PRIVINCE_CODE,
+RET.LEFT_FILE_NAME, RET.RIGHT_FILE_NAME, FCV.COMPARE_TYPE,
+TO_CHAR(RET.CREATE_TIME, 'YYYY-MM-DD#HH24:MI:SS'), RET.COMFORM_RATIO,
+RET.LEFT_UNMATCH, RET.RIGHT_UNMATCH,
+RET.LEFT_FILTER_RECORD, RET.RIGHT_FILTER_RECORD, 
+RET.LEFT_RECORD, RET.RIGHT_RECORD,'RESULT2'
+FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_TWO_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '${_month}'
+WHERE COMPARE_WAY = 2  --  and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0023%'
+ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
+/
+EOF
 }
 
 
-getMonthIncomingTable(){
-sqlplus -S /nolog <<EOF
+getMonthIncomingTable(){ 
+	_month=$1;
+	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量 MONTH_INCOMING 表 ..." 
+sqlplus -S /nolog <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
 set heading off
@@ -151,11 +175,12 @@ BIZ_CODE || PROVINCE_CODE BIZ_PRIVINCE_CODE,
 FILE_NAME, FILE_SIZE, CKSUM_VALUE, STATE, 
 RESEND_NUM, VALIDITY, TO_CHAR(INCOMING_TIME, 'YYYY-MM-DD#HH24:MI:SS'), 'MONTH_INCOMING'
 FROM MONTH_INCOMING 
-WHERE STTL_DT='201508' -- and BIZ_CODE || PROVINCE_CODE like '0082%'
+WHERE STTL_DT='${_month}' -- and BIZ_CODE || PROVINCE_CODE like '0082%'
 ORDER BY INCOMING_TIME
 /
 EOF
 }
+
 
 
 # 初始化函数
@@ -175,20 +200,86 @@ init ()
 		echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
 		exit 1
 	fi
+	
+	SUGGEST_REDO_LIST_AWK=suggest-redo-list.awk
+	if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
+		echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
+		exit 1
+	fi
+	
 	cfInit ${conf_file} noLock readOnly
 	dbsid=$(cfGetConfigItem common dbsid)
 	dbuser=$(cfGetConfigItem common dbuser)
 	dbpwd=$(cfGetConfigItem common dbpasswd)
 	# dbpwd=`getdbpwd ${dbuser}`
 	
-	{
-		getRawResult3Table
-		getMonthIncomingTable
-	} | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
+	OUTPUT_DIR=$(cfGetConfigItem common outputdir)
+	[ -z "${OUTPUT_DIR}" ] && OUTPUT_DIR="./output/"
+
+$ECHO "################################################################################"
+$ECHO "# 月份             : $MONTH"
+$ECHO "# 命令行           : $CMD_LINE"
+$ECHO "# 原始结果导入文件 : $RAW_INPUT_FILE"
+$ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
+$ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
+$ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
+$ECHO "################################################################################"
+
+	[ ! -d ${OUTPUT_DIR} ] && mkdir -p ${OUTPUT_DIR}
 	
-	# getRawResult3Table
-	# getMonthIncomingTable
+	rm ${OUTPUT_DIR}/month*
+	
+	> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
+	if [ ${RAW_INPUT_FILE} == "__DB__" ]; then
+		$ECHO  "[MESSAGE]	查询数据库 ..."
+		{
+			getRawResult2Table ${MONTH}
+			# getRawResult3Table ${MONTH}
+			getMonthIncomingTable ${MONTH}
+		} 
+		
+		awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql >  $OUTPUT_DIR/${RAW_OUTPUT_FILE}
+		# rm $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql;
+		if [ $? -ne 0 ]; then
+			$ECHO  "[ERROR]	解析数据库结果出错 ..."
+			exit 1
+		fi
+		exit ;
+		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_OUTPUT_FILE   > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		
+	else
+		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_INPUT_FILE   > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		if [ $? -ne 0 ]; then
+			$ECHO  "[ERROR]	解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
+			exit 1
+		fi
+	fi
+	
 }
+
+
+
+
+#main 入口#################################
+
+IGNORE_MONTH=${IGNORE_MONTH:="NO"}; # 如果数据由文件导入而非数据库导入则，忽略月份
+MONTH=${MONTH:=`date +%Y%m`};
+CURRENT_TIME=`date +%Y%m%d%H%M%S`;
+RAW_OUTPUT_FILE=${RAW_OUTPUT_FILE:="month_raw_output_${MONTH}.${CURRENT_TIME}"};
+REDO_OUTPUT_FILE=${REDO_OUTPUT_FILE:="month_redo_output_${MONTH}.${CURRENT_TIME}"};
+RAW_INPUT_FILE=${RAW_INPUT_FILE:="__DB__"};
+FORCE_PATTERN=${FORCE_PATTERN:""};
+
+if [ ${IGNORE_MONTH} == "YES" ];then
+	MONTH=${RAW_INPUT_FILE_MONTH}
+fi
+[ ${#MONTH} -ne 6 ]  && $ECHO  "[ERROR]		输入月份 MONTH="${MONTH}" 格式错误! 正确格式如: '201509' ..." &&  exit
+
+
+init
+
+exit
+
 if [ `whoami` = 'root' ];then
 	MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
 	cat raw.txt | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
@@ -196,27 +287,3 @@ else
 	init
 fi
 
-exit
-
-#main 入口#################################
-
-case "${MODE}" in
-	
-	"CREATE-MODE")
-		create_process
-		break
-		;;
-	"EXTRACT-MODE")
-		extract_process
-		break
-		;;
-		
-	"RESTORE-MODE")
-		restore_process
-		break
-		;;
-	--|*)
-		help
-		break
-		;;
-esac
