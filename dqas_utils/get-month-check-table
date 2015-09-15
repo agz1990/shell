@@ -9,7 +9,7 @@ fi
 EGREP="egrep"
 
 CMD_LINE="$0 $*"
-
+CMD_TIME=`date`
 
 
 help(){
@@ -96,7 +96,10 @@ do
         FORCE_PATTERN="^$2$"
         shift
 		;;
-		
+	--threshold)
+		THRESHOLD="$2"
+		shift
+		;;
 	-h|--help)
 		help
 		exit
@@ -113,7 +116,7 @@ done
 getRawResult3Table(){
 	_month=$1;
 	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
-sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
 set heading off
@@ -138,7 +141,7 @@ EOF
 getRawResult2Table(){
 	_month=$1;
 	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量双方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
-sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
 set heading off
@@ -164,7 +167,7 @@ EOF
 getMonthIncomingTable(){ 
 	_month=$1;
 	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量 MONTH_INCOMING 表 ..." 
-sqlplus -S /nolog <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
+sqlplus -S /nolog <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
 set heading off
@@ -181,7 +184,19 @@ ORDER BY INCOMING_TIME
 EOF
 }
 
-
+headDump(){
+	$ECHO "################################################################################"
+	$ECHO "# 月份             : $MONTH"
+	$ECHO "# 命令行           : $CMD_LINE"
+	$ECHO "# 比对阀值         ：$THRESHOLD %"
+	$ECHO "# 原始结果导入文件 : $RAW_INPUT_FILE"
+	$ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
+	$ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
+	$ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
+	$ECHO "# 命令执行时间     : $CMD_TIME"
+	$ECHO "################################################################################"
+	$ECHO
+}
 
 # 初始化函数
 init ()
@@ -214,22 +229,17 @@ init ()
 	# dbpwd=`getdbpwd ${dbuser}`
 	
 	OUTPUT_DIR=$(cfGetConfigItem common outputdir)
+	THRESHOLD=${THRESHOLD:=`cfGetConfigItem common threshold`};
+
 	[ -z "${OUTPUT_DIR}" ] && OUTPUT_DIR="./output/"
 
-$ECHO "################################################################################"
-$ECHO "# 月份             : $MONTH"
-$ECHO "# 命令行           : $CMD_LINE"
-$ECHO "# 原始结果导入文件 : $RAW_INPUT_FILE"
-$ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
-$ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
-$ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
-$ECHO "################################################################################"
+	headDump
 
 	[ ! -d ${OUTPUT_DIR} ] && mkdir -p ${OUTPUT_DIR}
 	
-	rm ${OUTPUT_DIR}/month*
+	# rm ${OUTPUT_DIR}/month*
 	
-	> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql
+	> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 	if [ ${RAW_INPUT_FILE} == "__DB__" ]; then
 		$ECHO  "[MESSAGE]	查询数据库 ..."
 		{
@@ -238,22 +248,32 @@ $ECHO "#########################################################################
 			getMonthIncomingTable ${MONTH}
 		} 
 		
-		awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql >  $OUTPUT_DIR/${RAW_OUTPUT_FILE}
+		headDump > $OUTPUT_DIR/${RAW_OUTPUT_FILE}
+		awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK COMPARE_RATDO_THRESHOLD=$THRESHOLD $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout >>  $OUTPUT_DIR/${RAW_OUTPUT_FILE}
+		
 		# rm $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql;
 		if [ $? -ne 0 ]; then
 			$ECHO  "[ERROR]	解析数据库结果出错 ..."
 			exit 1
 		fi
-		exit ;
-		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_OUTPUT_FILE   > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		
+		
+		headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_OUTPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		
 		
 	else
-		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_INPUT_FILE   > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+		
+		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_INPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
 		if [ $? -ne 0 ]; then
 			$ECHO  "[ERROR]	解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
 			exit 1
 		fi
 	fi
+	$ECHO "\n\n结果："
+	grep "^  \*\*\*" $OUTPUT_DIR/$RAW_OUTPUT_FILE;
+	grep "^  \*\*\*" $OUTPUT_DIR/${REDO_OUTPUT_FILE};
 	
 }
 

@@ -298,27 +298,27 @@ END{
 			
 			MUL_LINE	=	MUL_LINE"         "LINE;
 		}
-		
+		# print "@"L_FLAG,R_FLAG,VALID_RESULT
 		RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M2|\n";
 		if(L_FLAG == "LLL" && R_FLAG == "RRR"){
 			VALID_RESULT	=	"%"
+			if(_RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD || 
+			 (__RET[L_RECORD_TOTAL] == 0 || __RET[R_RECORD_TOTAL] == 0 )){
+				VALID_RATIO 	=	"%"
+			} else {
+				VALID_RATIO 	=	"-"
+			}
+			
+			if(HAVE_FURDER){
+				FURDER_RESULT	=	"-";
+			}
 		}else{
-			HAVE_FURDER		=	0; # 三方文件未到齐，没有未处理文件的概念
+			HAVE_FURDER		=	0; # 双方文件未到齐，没有未处理文件的概念
 			VALID_RESULT	=	"-"
-		}
-		
-		if((VALID_RESULT == "%" && _RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD) || 
-		__RET[L_RECORD_TOTAL] == 0 || __RET[R_RECORD_TOTAL] == 0 ){
-			VALID_RATIO 	=	"%"
-		} else {
 			VALID_RATIO 	=	"-"
-		}
-		
-		if(HAVE_FURDER){
-			FURDER_RESULT	=	"-";
-		} else {
 			FURDER_RESULT	=	"%";
 		}
+		
 		
 		printf(RESULT2_OUTPUT_FORMAT, \
 		VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
@@ -397,24 +397,22 @@ END{
 		RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M3|\n";
 		if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
 			VALID_RESULT	=	"%"
-		}else{
-			HAVE_FURDER		=	0; # 三方文件未到齐，没有未处理文件的概念
-			VALID_RESULT	=	"-"
-		}
-		
-		if((VALID_RESULT == "%" && _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD) ||
-			_RET[__RET3_A_RECORD_TOTAL] == 0 || _RET[__RET3_B_RECORD_TOTAL] == 0 || _RET[__RET3_C_RECORD_TOTAL] == 0){
+			
+			if( _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD ||
+			(_RET[__RET3_A_RECORD_TOTAL] == 0 || _RET[__RET3_B_RECORD_TOTAL] == 0 || _RET[__RET3_C_RECORD_TOTAL] == 0)){
 			VALID_RATIO 	=	"%"
-		} else {
+			} 
+			if(HAVE_FURDER){
+				FURDER_RESULT	=	"-";
+			}
+			
+			
+		}else{
+			VALID_RESULT	=	"-"
 			VALID_RATIO 	=	"-"
-		}
-		
-		if(HAVE_FURDER){
-			FURDER_RESULT	=	"-";
-		} else {
 			FURDER_RESULT	=	"%";
 		}
-		
+	
 		printf(RESULT3_OUTPUT_FORMAT, \
 		VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
 		_RET[__RET3_BIZ_PRIVINCE_CODE],_RET[__RET3_COMFORM_RATIO],\
@@ -425,7 +423,13 @@ END{
 		print MUL_LINE # | "sort -t '|' -k 7" | 
 	}
 
-	printf ("\n *** INCOMING_CNT: %d   INCOMING_VALID_CNT: %d  INCOMING_TOTAL_SIZE: %6.2f (G)  INCOMING_VALID_SIZE: %6.2f (G)  ***\n\n",
-	INCOMING_CNT,INCOMING_VALID_CNT, INCOMING_TOTAL_SIZE/1024/1024/1024,INCOMING_VALID_SIZE/1024/1024/1024)
+	FORMAT_LINE="\n\n\n  ***  本月传输文件数:： %d  有效文件数: %d\n";
+	FORMAT_LINE=FORMAT_LINE"  ***  文件总大小: %6.2f (G)  有效文件总大小: %6.2f (G) \n";
+	FORMAT_LINE=FORMAT_LINE"  ***  文件有效百分百: %6.2f %  文件大小有效百分百: %6.2f % \n";
+	
+	printf (FORMAT_LINE,
+	INCOMING_CNT,INCOMING_VALID_CNT, 
+	INCOMING_TOTAL_SIZE/1024/1024/1024,INCOMING_VALID_SIZE/1024/1024/1024,
+	(INCOMING_VALID_CNT/INCOMING_CNT)*100, (INCOMING_VALID_SIZE/INCOMING_TOTAL_SIZE)*100);
 	
 }
