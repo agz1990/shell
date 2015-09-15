@@ -234,7 +234,7 @@ $ECHO "#########################################################################
 		$ECHO  "[MESSAGE]	²éÑ¯Êý¾Ý¿â ..."
 		{
 			getRawResult2Table ${MONTH}
-			# getRawResult3Table ${MONTH}
+			getRawResult3Table ${MONTH}
 			getMonthIncomingTable ${MONTH}
 		} 
 		

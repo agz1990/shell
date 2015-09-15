@@ -13,6 +13,8 @@
 
 BEGIN{
 	FS="[[:space:]]+"
+	
+	COMPARE_RATDO_THRESHOLD	=	90;
 	INCOMING_CNT 			= 	0;
 	INCOMING_VALID_CNT 		=	0;
 	INCOMING_TOTAL_SIZE		=	0;
@@ -96,6 +98,7 @@ NF == 13 && $0 ~ /RESULT2$/ {
 	_timstr=CREATE_TIME;
 	gsub(/[#:-]/," ", _timstr);
 	CREATE_TIME_STAMP=mktime(_timstr);
+	sub(/#/," ", CREATE_TIME);
 	
 	# 正确率
 	COMFORM_RATIO		=	$6;
@@ -158,6 +161,7 @@ NF == 21 && $0 ~ /RESULT3$/ {
 	_timstr=CREATE_TIME;
 	gsub(/[#:-]/," ", _timstr);
 	CREATE_TIME_STAMP=mktime(_timstr);
+	sub(/#/," ", CREATE_TIME);
 	
 	# 正确率
 	COMFORM_RATIO		=	$7;
@@ -220,6 +224,7 @@ NF == 9 && $0 ~ /MONTH_INCOMING$/ {
 	_timstr=INCOMING_TIME
 	gsub(/[#:-]/," ", _timstr);
 	INCOMING_TIME_STAMP=mktime(_timstr)
+	gsub(/#/," ", INCOMING_TIME);
 	
 	CNT_KEY=BIZ_PRIVINCE_CODE"+CNT";
 	if(MONTH_INCOMING[CNT_KEY] <= 0){
@@ -294,7 +299,7 @@ END{
 			MUL_LINE	=	MUL_LINE"         "LINE;
 		}
 		
-		RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|M2|\n";
+		RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M2|\n";
 		if(L_FLAG == "LLL" && R_FLAG == "RRR"){
 			VALID_RESULT	=	"%"
 		}else{
@@ -302,7 +307,8 @@ END{
 			VALID_RESULT	=	"-"
 		}
 		
-		if(VALID_RESULT == "%" && _RET[__RET2_COMFORM_RATIO] >= 90){
+		if((VALID_RESULT == "%" && _RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD) || 
+		__RET[L_RECORD_TOTAL] == 0 || __RET[R_RECORD_TOTAL] == 0 ){
 			VALID_RATIO 	=	"%"
 		} else {
 			VALID_RATIO 	=	"-"
@@ -315,7 +321,7 @@ END{
 		}
 		
 		printf(RESULT2_OUTPUT_FORMAT, \
-		VALID_RESULT"|"VALID_RATIO"|"FURDER_RESULT,\
+		VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
 		_RET[__RET2_BIZ_PRIVINCE_CODE],_RET[__RET2_COMFORM_RATIO],\
 		L_FLAG,R_FLAG,"---",\
 		_RET[__RET2_CREATE_TIME],\
@@ -388,7 +394,7 @@ END{
 			MUL_LINE	=	MUL_LINE"         "LINE;
 		}
 		
-		RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|M3|\n";
+		RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M3|\n";
 		if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
 			VALID_RESULT	=	"%"
 		}else{
@@ -396,7 +402,8 @@ END{
 			VALID_RESULT	=	"-"
 		}
 		
-		if(VALID_RESULT == "%" && _RET[__RET3_COMFORM_RATIO] >= 90){
+		if((VALID_RESULT == "%" && _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD) ||
+			_RET[__RET3_A_RECORD_TOTAL] == 0 || _RET[__RET3_B_RECORD_TOTAL] == 0 || _RET[__RET3_C_RECORD_TOTAL] == 0){
 			VALID_RATIO 	=	"%"
 		} else {
 			VALID_RATIO 	=	"-"
@@ -409,7 +416,7 @@ END{
 		}
 		
 		printf(RESULT3_OUTPUT_FORMAT, \
-		VALID_RESULT"|"VALID_RATIO"|"FURDER_RESULT,\
+		VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
 		_RET[__RET3_BIZ_PRIVINCE_CODE],_RET[__RET3_COMFORM_RATIO],\
 		A_FLAG,B_FLAG,C_FLAG,\
 		_RET[__RET3_CREATE_TIME],\
