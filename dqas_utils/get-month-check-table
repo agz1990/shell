@@ -17,36 +17,22 @@ cat  << EOF
 ########################################################################
 # Author      : jigc@cmsz.com
 # Script Name : get-month-check-table
-# Description : 打印月全量检查报表
+# Description : 月全量检查报表脚本
 # Version     : V1.0
-# Usage       : get-month-check-table [--mo|--extract-mode|--restore-mode] 
+# Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern]
 
-         --conf 指定配置文件的路径，配置文件格式为 工单编号.conf(OO-20150710-00000001.conf)
+         -m 指定要检查的月份，格式如 -m 201509 (如果不指定默认月份为本月)
 		 
-         --create-mod    脚本工作在创建更新包的模式下
+         --threshold  设置结果通过率阀值，默认为配置文件 threshold 所配置的值
              
-         --extract-mode  脚本工作在更新及备份的模式下(默认仅做备份不做跟新)
-             --excute-override 执行更新动作
+         --force <pattern>  强制标记通过 pattern 所匹配的业务线，标记为F. pattern匹配使用正则格式
+             example:
+				--force "0022.*"  匹配并标记0022整条业务线
+				--force "0022.*|0082.*"  匹配并标记00220082和整条业务线
 			 
-         --restore-mode  脚本工作在回退的模式下
 
 # Log         :
-#  2015.07.15   V1.0: 实现基本功能 
-# 
-#
-# Example     :
-#
-#  生成更新包：
-#    package-utils --create-mode --conf /path/to/conffile/OO-20150710-00000001.conf
-#
-#  进行备份：
-#    package-utils  --extract-mode  --conf /path/to/conffile/KR-20150112-11224364.conf 
-#
-#  进行备份后再更新:
-#    package-utils --extract-mode --excute-override  --conf /path/to/conffile/KR-20150112-11224364.conf 
-#
-#  回退：
-#     package-utils  --restore-mode  --conf /path/to/conffile/KR-20150112-11224364.conf 
+#  2015.09.15   V1.0: 实现基本功能 
 #
 ########################################################################
 EOF
@@ -203,20 +189,20 @@ init ()
 {
 	 . cfConfigFile.sh
 	 
-	conf_file=${DQAS_HOME}/conf/get-month-check-table.conf
+	conf_file=/home/jigc/conf/get-month-check-table.conf
 	if [ ! -f ${conf_file} ];then
 		echo "conf file [${conf_file}] not exist,exit!"
 		exit 1
 	fi
 	
-	# MEARGE_RESULT_IMCOMING_TABLE_AWK=${DQAS_HOME}/bin/merge-result-incoiming-table.awk
-	MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
+	MEARGE_RESULT_IMCOMING_TABLE_AWK=/home/jigc/bin/merge-result-incoiming-table.awk
+	# MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
 	if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
 		echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
 		exit 1
 	fi
 	
-	SUGGEST_REDO_LIST_AWK=suggest-redo-list.awk
+	SUGGEST_REDO_LIST_AWK=/home/jigc/bin/suggest-redo-list.awk
 	if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
 		echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
 		exit 1
