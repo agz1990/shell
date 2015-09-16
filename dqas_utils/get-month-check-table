@@ -1,9 +1,9 @@
 #!/bin/ksh
 
 if [ `uname` = "Linux" ]; then
-	ECHO="echo -e" 
+    ECHO="echo -e" 
 else
-	ECHO="echo " 
+    ECHO="echo " 
 fi
 
 EGREP="egrep"
@@ -22,14 +22,43 @@ cat  << EOF
 # Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern]
 
          -m 指定要检查的月份，格式如 -m 201509 (如果不指定默认月份为本月)
-		 
+         
          --threshold  设置结果通过率阀值，默认为配置文件 threshold 所配置的值
              
          --force <pattern>  强制标记通过 pattern 所匹配的业务线，标记为F. pattern匹配使用正则格式
              example:
-				--force "0022.*"  匹配并标记0022整条业务线
-				--force "0022.*|0082.*"  匹配并标记00220082和整条业务线
-			 
+                --force "0022.*"  匹配并标记0022整条业务线
+                --force "0022.*|0082.*"  匹配并标记0022和0082整条业务线
+#输出标记字段说明########
+结果字段标志
+    |标志位|业务代码+省代码|通过率百分比|A文件|B文件|C文件|结果生成时间|比对规则|重跑标记|结果标志字段|
+    
+    标志位：[%-]
+    标志位总共3位：
+    第一位: 
+        '%': 三方文件到齐 
+        '-': 三方文件未到齐
+    第二位: 
+        '%': 对比结果通过预设阀值 
+        '-': 对比结果未通过预设阀值
+    第三位: 
+        '%': 结果生成时间晚于最后一个文件到达时间 
+        '-': 结果生成时间早于最后一个文件到达时间(有新文件未处理)
+
+文件详情：
+    标志位|状态位业务代码+省代码|文件名|状态值|文件大小|校验值|文件创建时间|文件标志字段|
+    标志位：
+        ' ': 无特殊标志
+        'U': 一般用在三方文件未到齐，预标出三方文件
+        'R': 用于结果为通过预设值，标记出需要重跑的文件
+        'N': 用于标记新来的文件，未跑出结果的文件
+    
+    状态位:
+        格式： xxx
+        'AAA','BBB','CCC' : 用于标记比对结果中使用的文件
+        ' A ',' B ',' C ' : 用于标记三方文件未到齐对文件进行预标记
+        ' - '  : 用于状态正常，但并非用在生成比对结果的文件
+        ' ！': 用于标记异常文件(校验错误)     
 
 # Log         :
 #  2015.09.15   V1.0: 实现基本功能 
@@ -53,55 +82,55 @@ while [ $# -gt 0 ];
 do
     case "$1" in
     -m)
-	    MONTH="$2"
+        MONTH="$2"
         shift
         ;;
-		
-	# --raw-output)
-	    # RAW_OUTPUT_FILE="$2"
+        
+    # --raw-output)
+        # RAW_OUTPUT_FILE="$2"
         # shift
         # ;;
-		
-	--raw-input)
-		IGNORE_MONTH="YES";
-	    RAW_INPUT_FILE="$2"
-		
-		[ ! -f "${RAW_INPUT_FILE}" ] && $ECHO  "[ERROR]		输入文件[ ${RAW_INPUT_FILE} ]不存在 ..." &&  exit
-		file_name=`basename ${RAW_INPUT_FILE}`;
-		# month_raw_output_201509.20150914154719"
-		# echo month_raw_output_201509.20150914154719  | sed -e 's/.*_\([0-9]*\)\..*/\1/p'
-		RAW_INPUT_FILE_MONTH=`echo ${file_name}  | sed -e 's/.*_\([0-9]*\)\..*/\1/p'`
-		
+        
+    --raw-input)
+        IGNORE_MONTH="YES";
+        RAW_INPUT_FILE="$2"
+        
+        [ ! -f "${RAW_INPUT_FILE}" ] && $ECHO  "[ERROR]        输入文件[ ${RAW_INPUT_FILE} ]不存在 ..." &&  exit
+        file_name=`basename ${RAW_INPUT_FILE}`;
+        # month_raw_output_201509.20150914154719"
+        # echo month_raw_output_201509.20150914154719  | sed -e 's/.*_\([0-9]*\)\..*/\1/p'
+        RAW_INPUT_FILE_MONTH=`echo ${file_name}  | sed -e 's/.*_\([0-9]*\)\..*/\1/p'`
+        
         shift
         ;;
-	--redo-output)
-	    REDO_OUTPUT_FILE="$2"
+    --redo-output)
+        REDO_OUTPUT_FILE="$2"
         shift
         ;;
     --force)
         FORCE_PATTERN="^$2$"
         shift
-		;;
-	--threshold)
-		THRESHOLD="$2"
-		shift
-		;;
-	-h|--help)
-		help
-		exit
-		;;
-		
+        ;;
+    --threshold)
+        THRESHOLD="$2"
+        shift
+        ;;
+    -h|--help)
+        help
+        exit
+        ;;
+        
     --)
-		break;
-		;;
+        break;
+        ;;
     esac
 shift
 done
 ###################################
 
 getRawResult3Table(){
-	_month=$1;
-	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
+    _month=$1;
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
 sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
@@ -125,8 +154,8 @@ EOF
 }
 
 getRawResult2Table(){
-	_month=$1;
-	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量双方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
+    _month=$1;
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量双方结果 MONTH_TWO_FILE_COMPARE 表 ..." 
 sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
@@ -151,8 +180,8 @@ EOF
 
 
 getMonthIncomingTable(){ 
-	_month=$1;
-	$ECHO  "[MESSAGE]	查询 ${_month} 的月全量 MONTH_INCOMING 表 ..." 
+    _month=$1;
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量 MONTH_INCOMING 表 ..." 
 sqlplus -S /nolog <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
 connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
@@ -171,96 +200,96 @@ EOF
 }
 
 headDump(){
-	$ECHO "################################################################################"
-	$ECHO "# 月份             : $MONTH"
-	$ECHO "# 命令行           : $CMD_LINE"
-	$ECHO "# 比对阀值         ：$THRESHOLD %"
-	$ECHO "# 原始结果导入文件 : $RAW_INPUT_FILE"
-	$ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
-	$ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
-	$ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
-	$ECHO "# 命令执行时间     : $CMD_TIME"
-	$ECHO "################################################################################"
-	$ECHO
+    $ECHO "################################################################################"
+    $ECHO "# 月份             : $MONTH"
+    $ECHO "# 命令行           : $CMD_LINE"
+    $ECHO "# 比对阀值         ：$THRESHOLD %"
+    $ECHO "# 原始结果导入文件 : $RAW_INPUT_FILE"
+    $ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
+    $ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
+    $ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
+    $ECHO "# 命令执行时间     : $CMD_TIME"
+    $ECHO "################################################################################"
+    $ECHO
 }
 
 # 初始化函数
 init ()
 {
-	 . cfConfigFile.sh
-	 
-	conf_file=/home/jigc/conf/get-month-check-table.conf
-	if [ ! -f ${conf_file} ];then
-		echo "conf file [${conf_file}] not exist,exit!"
-		exit 1
-	fi
-	
-	MEARGE_RESULT_IMCOMING_TABLE_AWK=/home/jigc/bin/merge-result-incoiming-table.awk
-	# MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
-	if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
-		echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
-		exit 1
-	fi
-	
-	SUGGEST_REDO_LIST_AWK=/home/jigc/bin/suggest-redo-list.awk
-	if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
-		echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
-		exit 1
-	fi
-	
-	cfInit ${conf_file} noLock readOnly
-	dbsid=$(cfGetConfigItem common dbsid)
-	dbuser=$(cfGetConfigItem common dbuser)
-	dbpwd=$(cfGetConfigItem common dbpasswd)
-	# dbpwd=`getdbpwd ${dbuser}`
-	
-	OUTPUT_DIR=$(cfGetConfigItem common outputdir)
-	THRESHOLD=${THRESHOLD:=`cfGetConfigItem common threshold`};
+     . cfConfigFile.sh
+     
+    conf_file=/home/jigc/conf/get-month-check-table.conf
+    if [ ! -f ${conf_file} ];then
+        echo "conf file [${conf_file}] not exist,exit!"
+        exit 1
+    fi
+    
+    MEARGE_RESULT_IMCOMING_TABLE_AWK=/home/jigc/bin/merge-result-incoiming-table.awk
+    # MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
+    if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
+        echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
+        exit 1
+    fi
+    
+    SUGGEST_REDO_LIST_AWK=/home/jigc/bin/suggest-redo-list.awk
+    if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
+        echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
+        exit 1
+    fi
+    
+    cfInit ${conf_file} noLock readOnly
+    dbsid=$(cfGetConfigItem common dbsid)
+    dbuser=$(cfGetConfigItem common dbuser)
+    dbpwd=$(cfGetConfigItem common dbpasswd)
+    # dbpwd=`getdbpwd ${dbuser}`
+    
+    OUTPUT_DIR=$(cfGetConfigItem common outputdir)
+    THRESHOLD=${THRESHOLD:=`cfGetConfigItem common threshold`};
 
-	[ -z "${OUTPUT_DIR}" ] && OUTPUT_DIR="./output/"
+    [ -z "${OUTPUT_DIR}" ] && OUTPUT_DIR="./output/"
 
-	headDump
+    headDump
 
-	[ ! -d ${OUTPUT_DIR} ] && mkdir -p ${OUTPUT_DIR}
-	
-	# rm ${OUTPUT_DIR}/month*
-	
-	> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
-	if [ ${RAW_INPUT_FILE} == "__DB__" ]; then
-		$ECHO  "[MESSAGE]	查询数据库 ..."
-		{
-			getRawResult2Table ${MONTH}
-			getRawResult3Table ${MONTH}
-			getMonthIncomingTable ${MONTH}
-		} 
-		
-		headDump > $OUTPUT_DIR/${RAW_OUTPUT_FILE}
-		awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK COMPARE_RATDO_THRESHOLD=$THRESHOLD $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout >>  $OUTPUT_DIR/${RAW_OUTPUT_FILE}
-		
-		# rm $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql;
-		if [ $? -ne 0 ]; then
-			$ECHO  "[ERROR]	解析数据库结果出错 ..."
-			exit 1
-		fi
-		
-		
-		headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
-		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_OUTPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
-		
-		
-	else
-		headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
-		
-		awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_INPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
-		if [ $? -ne 0 ]; then
-			$ECHO  "[ERROR]	解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
-			exit 1
-		fi
-	fi
-	$ECHO "\n\n结果："
-	grep "^  \*\*\*" $OUTPUT_DIR/$RAW_OUTPUT_FILE;
-	grep "^  \*\*\*" $OUTPUT_DIR/${REDO_OUTPUT_FILE};
-	
+    [ ! -d ${OUTPUT_DIR} ] && mkdir -p ${OUTPUT_DIR}
+    
+    # rm ${OUTPUT_DIR}/month*
+    
+    > $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+    if [ ${RAW_INPUT_FILE} == "__DB__" ]; then
+        $ECHO  "[MESSAGE]    查询数据库 ..."
+        {
+            getRawResult2Table ${MONTH}
+            getRawResult3Table ${MONTH}
+            getMonthIncomingTable ${MONTH}
+        } 
+        
+        headDump > $OUTPUT_DIR/${RAW_OUTPUT_FILE}
+        awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK COMPARE_RATDO_THRESHOLD=$THRESHOLD $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout >>  $OUTPUT_DIR/${RAW_OUTPUT_FILE}
+        
+        # rm $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sql;
+        if [ $? -ne 0 ]; then
+            $ECHO  "[ERROR]    解析数据库结果出错 ..."
+            exit 1
+        fi
+        
+        
+        headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+        awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_OUTPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+        
+        
+    else
+        headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+        
+        awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_INPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+        if [ $? -ne 0 ]; then
+            $ECHO  "[ERROR]    解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
+            exit 1
+        fi
+    fi
+    $ECHO "\n\n结果："
+    grep "^  \*\*\*" $OUTPUT_DIR/$RAW_OUTPUT_FILE;
+    grep "^  \*\*\*" $OUTPUT_DIR/${REDO_OUTPUT_FILE};
+    
 }
 
 
@@ -277,9 +306,9 @@ RAW_INPUT_FILE=${RAW_INPUT_FILE:="__DB__"};
 FORCE_PATTERN=${FORCE_PATTERN:""};
 
 if [ ${IGNORE_MONTH} == "YES" ];then
-	MONTH=${RAW_INPUT_FILE_MONTH}
+    MONTH=${RAW_INPUT_FILE_MONTH}
 fi
-[ ${#MONTH} -ne 6 ]  && $ECHO  "[ERROR]		输入月份 MONTH="${MONTH}" 格式错误! 正确格式如: '201509' ..." &&  exit
+[ ${#MONTH} -ne 6 ]  && $ECHO  "[ERROR]        输入月份 MONTH="${MONTH}" 格式错误! 正确格式如: '201509' ..." &&  exit
 
 
 init
@@ -287,9 +316,9 @@ init
 exit
 
 if [ `whoami` = 'root' ];then
-	MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
-	cat raw.txt | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
+    MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
+    cat raw.txt | awk -f $MEARGE_RESULT_IMCOMING_TABLE_AWK
 else
-	init
+    init
 fi
 
