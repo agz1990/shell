@@ -217,6 +217,7 @@ connect ${dbuser}/${dbpwd}@${dbsid}
 set feedback off
 set heading off
 set linesize 1000
+set null NULL
 set pages 0
 SELECT
 BIZ_CODE || PROVINCE_CODE BIZ_PRIVINCE_CODE,

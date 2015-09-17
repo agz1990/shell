@@ -426,6 +426,7 @@ END{
                         
             INCOMING_CNT ++;
             INCOMING_TOTAL_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE];
+            # print _RET[__RET3_A_FILE_NAME],_RET[__RET3_B_FILE_NAME],_RET[__RET3_C_FILE_NAME]
             if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET3_CREATE_TIME_STAMP] && \
             ! match(_RET[__RET3_A_FILE_NAME],"NULL")){
                 HAVE_FURDER        =    1;
