@@ -177,36 +177,41 @@ function dumpOneResult(){
         }
     
     } else { # 未出结果(一般是文件未到齐)
-        if(STATE_SYMBLE == " - "){
-            _str=CURRENT_COMPARE_TYPE
-            gsub(/_/,".*", _str); 
+        if(match(STATE_SYMBLE, / [ABCLR] /)){
+            UNMATCH_CNT ++;
+            INCOMING_VALID_SIZE_M += FILE_SIZE_M;
+        }
+    
+        # if(STATE_SYMBLE == " - "){
+            # _str=CURRENT_COMPARE_TYPE
+            # gsub(/_/,".*", _str); 
             # print _str
-            split(_str,_ARR, "+");
-            TYPE    =    "#";
+            # split(_str,_ARR, "+");
+            # TYPE    =    "#";
             # print FILE_NAME,_ARR[1],_ARR[2],_ARR[3],match(FILE_NAME,_ARR[1])
-            if(match(FILE_NAME,_ARR[1])){
-                TYPE=  M3_FLAG ? "A" : "L";
-                sub(/\| - \|/,"U| "TYPE" |", ONEROW);
-                UNMATCH_CNT ++;
-                INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-                A_FILE_ROW = ONEROW;
-                next;    
-            } else if(match(FILE_NAME,_ARR[2])){
-                TYPE=  M3_FLAG ? "B" : "R";
-                sub(/\| - \|/,"U| "TYPE" |", ONEROW); 
-                UNMATCH_CNT ++;
-                INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-                B_FILE_ROW = ONEROW;
-                next
-            } else if(match(FILE_NAME,_ARR[3]) && M3_FLAG){
-                TYPE="C";
-                sub(/\| - \|/,"U| "TYPE" |", ONEROW); 
-                UNMATCH_CNT ++;
-                INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-                C_FILE_ROW = ONEROW;
-                next;
-            } 
-        } 
+            # if(match(FILE_NAME,_ARR[1])){
+                # TYPE=  M3_FLAG ? "A" : "L";
+                # sub(/ \| - \|/,"U| "TYPE" |", ONEROW);
+                # UNMATCH_CNT ++;
+                # INCOMING_VALID_SIZE_M += FILE_SIZE_M;
+                # A_FILE_ROW = ONEROW;
+                # next;    
+            # } else if(match(FILE_NAME,_ARR[2])){
+                # TYPE=  M3_FLAG ? "B" : "R";
+                # sub(/\| - \|/," U| "TYPE" |", ONEROW); 
+                # UNMATCH_CNT ++;
+                # INCOMING_VALID_SIZE_M += FILE_SIZE_M;
+                # B_FILE_ROW = ONEROW;
+                # next
+            # } else if(match(FILE_NAME,_ARR[3]) && M3_FLAG){
+                # TYPE="C";
+                # sub(/\| - \|/," U| "TYPE" |", ONEROW); 
+                # UNMATCH_CNT ++;
+                # INCOMING_VALID_SIZE_M += FILE_SIZE_M;
+                # C_FILE_ROW = ONEROW;
+                # next;
+            # } 
+        # } 
     } 
     
 

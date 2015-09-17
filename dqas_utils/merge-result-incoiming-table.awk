@@ -75,11 +75,11 @@ BEGIN{
 }
 
 
-function recheckResultLine(resultLine){
-    # print "abc "resultLine
+function recheckresultLine(result_line){
+    # print "abc "result_line
     pass_flag=0;
-    split(resultLine, _RET,"|");
-    if(match(resultLine, /M2\|$/)){
+    split(result_line, _RET,"|");
+    if(match(result_line, /M2\|$/)){
         left_file_pattern = sprintf(".%010s.gz", _RET[__RET2_L_RECORD_TOTAL]);
         
         right_file_pattern = sprintf(".%010s.gz", _RET[__RET2_R_RECORD_TOTAL]);
@@ -88,7 +88,7 @@ function recheckResultLine(resultLine){
            match(_RET[__RET2_R_FILE_NAME],right_file_pattern)) {
             pass_flag=1;
          }
-    } else  if(match(resultLine, /M3|$/)){
+    } else  if(match(result_line, /M3|$/)){
     
         A_file_pattern = sprintf(".%010s.gz", _RET[__RET3_A_RECORD_TOTAL]);
         
@@ -106,6 +106,27 @@ function recheckResultLine(resultLine){
     return pass_flag;
 }
 
+
+function getOneFileSideSymble(file_name,compare_way){
+
+    _str=compare_way
+
+    gsub(/_/,".*", _str); 
+    split(_str,_ARR, "+");
+    TYPE    =    "-";
+    # print file_name,_ARR[1],_ARR[2],_ARR[3],match(file_name,_ARR[1])
+    
+    M3_FLAG = length(_ARR[3]) ? 1 : 0;
+    
+    if(match(file_name,_ARR[1])){
+        TYPE=  M3_FLAG ? "A" : "L";
+    } else if(match(file_name,_ARR[2])){
+        TYPE=  M3_FLAG ? "B" : "R";
+    } else if(match(file_name,_ARR[3])){
+        TYPE= M3_FLAG ? "C" : "-";
+    } 
+    return TYPE;
+}
 
 NF == 13 && $0 ~ /RESULT2$/ {
     
@@ -315,7 +336,16 @@ END{
                 INCOMING_VALID_CNT ++;
                 INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
             }  else {
-                STATE_SYMBLE    =    " - ";
+                SIDE_SYMBLE    =   getOneFileSideSymble(FILE_NAME,_RET[__RET2_COMPARE_TYPE]);
+                if(SIDE_SYMBLE == "L"){
+                    L_FLAG          =    "-L-";
+                    STATE_SYMBLE    =    " L ";
+                } else if (SIDE_SYMBLE == "R"){
+                    R_FLAG          =    "-R-";
+                    STATE_SYMBLE    =    " R ";
+                } else {
+                    STATE_SYMBLE    =    " - ";
+                }
             }
             
             FILE_DETAIL_OUTPUT_FORMAT="|%s|%07s|%41s|%1d|%8.2f(M)|%12s|%19s|MI|\n";
@@ -341,7 +371,7 @@ END{
         if(L_FLAG == "LLL" && R_FLAG == "RRR"){
             VALID_RESULT    =    "%"
             
-            if(recheckResultLine(RESULT2_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
+            if(recheckresultLine(RESULT2_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
                 # 校验通过
                 RESULT_CHECK="%";
                 # print "PASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
@@ -418,7 +448,19 @@ END{
                 INCOMING_VALID_CNT ++;
                 INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]                    
             } else {
-                STATE_SYMBLE    =    " - ";
+                SIDE_SYMBLE    =   getOneFileSideSymble(FILE_NAME,_RET[__RET3_COMPARE_TYPE]);
+                if(SIDE_SYMBLE == "A"){
+                    A_FLAG          =    "-A-";
+                    STATE_SYMBLE    =    " A ";
+                } else if (SIDE_SYMBLE == "B"){
+                    B_FLAG          =    "-B-";
+                    STATE_SYMBLE    =    " B ";
+                } else if (SIDE_SYMBLE == "C"){
+                    C_FLAG          =    "-C-";
+                    STATE_SYMBLE    =    " C ";
+                } else {
+                    STATE_SYMBLE    =    " - ";
+                }
             }
             
             FILE_DETAIL_OUTPUT_FORMAT="|%s|%07s|%41s|%1d|%8.2f(M)|%12s|%19s|MI|\n";
@@ -444,7 +486,7 @@ END{
         if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
             VALID_RESULT    =    "%"
             
-            if(recheckResultLine(RESULT3_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
+            if(recheckresultLine(RESULT3_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
                 # 校验通过
                 RESULT_CHECK="%";
                 # print "PASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
