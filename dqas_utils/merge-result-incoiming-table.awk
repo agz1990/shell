@@ -75,6 +75,38 @@ BEGIN{
 }
 
 
+function recheckResultLine(resultLine){
+    # print "abc "resultLine
+    pass_flag=0;
+    split(resultLine, _RET,"|");
+    if(match(resultLine, /M2\|$/)){
+        left_file_pattern = sprintf(".%010s.gz", _RET[__RET2_L_RECORD_TOTAL]);
+        
+        right_file_pattern = sprintf(".%010s.gz", _RET[__RET2_R_RECORD_TOTAL]);
+        # print "PATTERN:"left_file_pattern"|"right_file_pattern
+        if(match(_RET[__RET2_L_FILE_NAME],left_file_pattern) && 
+           match(_RET[__RET2_R_FILE_NAME],right_file_pattern)) {
+            pass_flag=1;
+         }
+    } else  if(match(resultLine, /M3|$/)){
+    
+        A_file_pattern = sprintf(".%010s.gz", _RET[__RET3_A_RECORD_TOTAL]);
+        
+        B_file_pattern = sprintf(".%010s.gz", _RET[__RET3_B_RECORD_TOTAL]);
+        
+        C_file_pattern = sprintf(".%010s.gz", _RET[__RET3_C_RECORD_TOTAL]);
+      
+        if(match(_RET[__RET3_A_FILE_NAME],A_file_pattern) && 
+           match(_RET[__RET3_B_FILE_NAME],B_file_pattern) && 
+           match(_RET[__RET3_C_FILE_NAME],C_file_pattern)) {
+            pass_flag=1;
+         }
+    }
+    
+    return pass_flag;
+}
+
+
 NF == 13 && $0 ~ /RESULT2$/ {
     
     
@@ -119,7 +151,7 @@ NF == 13 && $0 ~ /RESULT2$/ {
 
     
     
-    _format="|%s|%41s|%41s|%s|%19s|%6.2f|%011s|%s|%s|%s|"
+    _format="|%s|%41s|%41s|%s|%19s|%6.2f|%011s|%s|%s|%s|M2|"
     RESULT2_ARRAY[BIZ_PRIVINCE_CODE]=sprintf(_format,\
     BIZ_PRIVINCE_CODE,\
     L_FILE_NAME,R_FILE_NAME,COMPARE_TYPE,\
@@ -186,7 +218,7 @@ NF == 21 && $0 ~ /RESULT3$/ {
     C_RECORD_TOTAL        =    $20;
     
     
-    _format="|%s|%41s|%41s|%41s|%s|%19s|%6.2f|%011s|%s|%s|%s|"
+    _format="|%s|%41s|%41s|%41s|%s|%19s|%6.2f|%011s|%s|%s|%s|M3|"
     RESULT3_ARRAY[BIZ_PRIVINCE_CODE]=sprintf(_format,\
     BIZ_PRIVINCE_CODE,\
     A_FILE_NAME,B_FILE_NAME,C_FILE_NAME,COMPARE_TYPE,\
@@ -255,7 +287,7 @@ END{
         MUL_LINE    =    "";
         HAVE_FURDER    =    0;
         for(i = 1; i < MONTH_INCOMING[CNT_KEY]; i++){
-
+            
             
             INDEX_KEY    =    _biz_privince_code"+"i;
             split(MONTH_INCOMING[INDEX_KEY], _ONE_FILE_ROW,"|");
@@ -300,28 +332,36 @@ END{
         }
         # print "@"L_FLAG,R_FLAG,VALID_RESULT
         RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M2|\n";
+        
+        VALID_RESULT       =    "-"
+        RESULT_CHECK       =    "-"
+        VALID_RATIO        =    "-"
+        FURDER_RESULT      =    "%";
+        # print 
         if(L_FLAG == "LLL" && R_FLAG == "RRR"){
             VALID_RESULT    =    "%"
-            if(_RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD || 
-             (__RET[L_RECORD_TOTAL] == 0 || __RET[R_RECORD_TOTAL] == 0 )){
-                VALID_RATIO     =    "%"
-            } else {
-                VALID_RATIO     =    "-"
+            
+            if(recheckResultLine(RESULT2_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
+                # 校验通过
+                RESULT_CHECK="%";
+                # print "PASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
+            }else{
+                # print "UNPASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
             }
+            
+
+            if(RESULT_CHECK && (_RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD)){
+                VALID_RATIO     =    "%"
+            } 
             
             if(HAVE_FURDER){
                 FURDER_RESULT    =    "-";
             }
-        }else{
-            HAVE_FURDER        =    0; # 双方文件未到齐，没有未处理文件的概念
-            VALID_RESULT       =    "-"
-            VALID_RATIO        =    "-"
-            FURDER_RESULT      =    "%";
         }
         
         
         printf(RESULT2_OUTPUT_FORMAT, \
-        VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
+        VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
         _RET[__RET2_BIZ_PRIVINCE_CODE],_RET[__RET2_COMFORM_RATIO],\
         L_FLAG,R_FLAG,"---",\
         _RET[__RET2_CREATE_TIME],\
@@ -394,27 +434,35 @@ END{
             MUL_LINE    =    MUL_LINE"         "LINE;
         }
         
+        
+        VALID_RESULT       =    "-"
+        RESULT_CHECK       =    "-"
+        VALID_RATIO        =    "-"
+        FURDER_RESULT      =    "%";
+        
         RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M3|\n";
         if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
             VALID_RESULT    =    "%"
             
-            if( _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD ||
-            (_RET[__RET3_A_RECORD_TOTAL] == 0 || _RET[__RET3_B_RECORD_TOTAL] == 0 || _RET[__RET3_C_RECORD_TOTAL] == 0)){
-            VALID_RATIO     =    "%"
+            if(recheckResultLine(RESULT3_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
+                # 校验通过
+                RESULT_CHECK="%";
+                # print "PASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
+            }else{
+                # print "UNPASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
+            }
+            
+            if( RESULT_CHECK && _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD){
+                VALID_RATIO     =    "%"
             } 
             if(HAVE_FURDER){
                 FURDER_RESULT    =    "-";
             }
             
-            
-        }else{
-            VALID_RESULT    =    "-"
-            VALID_RATIO     =    "-"
-            FURDER_RESULT   =    "%";
         }
     
         printf(RESULT3_OUTPUT_FORMAT, \
-        VALID_RESULT""VALID_RATIO""FURDER_RESULT,\
+        VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
         _RET[__RET3_BIZ_PRIVINCE_CODE],_RET[__RET3_COMFORM_RATIO],\
         A_FLAG,B_FLAG,C_FLAG,\
         _RET[__RET3_CREATE_TIME],\
