@@ -287,7 +287,6 @@ init ()
         fi
     fi
     $ECHO "\n\n½á¹û£º"
-    grep "^  \*\*\*" $OUTPUT_DIR/$RAW_OUTPUT_FILE;
     grep "^  \*\*\*" $OUTPUT_DIR/${REDO_OUTPUT_FILE};
     
 }

@@ -13,16 +13,22 @@
 
 BEGIN{
     FS="|"
-    FORCE_PATTERN   =    "";
-    ALL_RESULT      =    0;
-    PASS3WAY        =    0;
-    UNPASS2WAY      =    0;
-    PASS2WAY        =    0;
-    UNPASS3WAY      =    0;
-    WAITING2_FILES  =    0;
-    WAITING3_FILES  =    0;
-    HAVE_FURDER     =    0;
-    FORCE_REDO_LINE =    0;
+    FORCE_PATTERN   =   "";
+    ALL_RESULT      =   0;
+    PASS3WAY        =   0;
+    UNPASS2WAY      =   0;
+    PASS2WAY        =   0;
+    UNPASS3WAY      =   0;
+    WAITING2_FILES  =   0;
+    WAITING3_FILES  =   0;
+    HAVE_FURDER     =   0;
+    FORCE_REDO_LINE =   0;
+    
+    INCOMING_CNT    =   0;
+    USE_FOR_RESULT_CNT  =   0;  # 已经生成结果的文件
+    UNMATCH_CNT         =   0;  # 未匹配成功的结果
+    INCOMING_TOTAL_SIZE_M =   0;
+    INCOMING_VALID_SIZE_M =   0;
     
     # awk -f suggest-redo-list.awk FORCE_PATTERN="00822.." ./output/month_redo_output_201508.20150914163440
 }
@@ -114,6 +120,17 @@ function dumpOneResult(){
     ONEROW    =    $0;
     STATE_SYMBLE = $2;
     FILE_NAME    =    $4;
+    FILE_SIZE_M  =    $6;
+    INCOMING_CNT ++;
+    INCOMING_TOTAL_SIZE_M +=  FILE_SIZE_M;
+    
+    if(STATE_SYMBLE == "AAA" || STATE_SYMBLE == "BBB" || STATE_SYMBLE == "CCC" || \
+       STATE_SYMBLE == "LLL"  || STATE_SYMBLE == "RRR" ){
+        USE_FOR_RESULT_CNT  ++;
+        INCOMING_VALID_SIZE_M += FILE_SIZE_M;
+    }
+  
+    
     if(UNPASS_FLAG || RESUL_PASS_FLAG || FORCE_REDO_FALG){
         if(STATE_SYMBLE == "AAA"){
             # TODO 判断 taskman 是否重启过，如果重启时间在结果时间之前则需呀全部拷贝进行重跑 
@@ -148,16 +165,22 @@ function dumpOneResult(){
             if(match(FILE_NAME,_ARR[1])){
                 TYPE=  M3_FLAG ? "A" : "L";
                 sub(/\| - \|/,"U| "TYPE" |", ONEROW);
+                UNMATCH_CNT ++;
+                INCOMING_VALID_SIZE_M += FILE_SIZE_M;
                 A_FILE_ROW = ONEROW;
                 next;    
             } else if(match(FILE_NAME,_ARR[2])){
                 TYPE=  M3_FLAG ? "B" : "R";
                 sub(/\| - \|/,"U| "TYPE" |", ONEROW); 
+                UNMATCH_CNT ++;
+                INCOMING_VALID_SIZE_M += FILE_SIZE_M;
                 B_FILE_ROW = ONEROW;
                 next
             } else if(match(FILE_NAME,_ARR[3]) && M3_FLAG){
                 TYPE="C";
                 sub(/\| - \|/,"U| "TYPE" |", ONEROW); 
+                UNMATCH_CNT ++;
+                INCOMING_VALID_SIZE_M += FILE_SIZE_M;
                 C_FILE_ROW = ONEROW;
                 next;
             } 
@@ -189,17 +212,26 @@ function dumpOneResult(){
 
 END{
     FORMAT_LINE="\n\n\n  ***  总结果数： %d\n";
-    FORMAT_LINE=FORMAT_LINE"  ***  强制重跑: %d  有新文件未处理： %d\n";
+    FORMAT_LINE=FORMAT_LINE"  ***  文件总大小: %6.2f (G)  有效文件总大小: %6.2f (G) \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  本月传输总文件数:： %d  已经匹配成功的文件数: %d 等待匹配的文件数 %d\n";
+    FORMAT_LINE=FORMAT_LINE"  ***  文件有效百分百: %6.2f %  文件大小有效百分百: %6.2f % \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  强制重跑: %d  有新文件未处理的结果个数： %d\n";
     FORMAT_LINE=FORMAT_LINE"  ***  双方通过：%d  双方未通过：%d   双方未出结果(文件未到齐或正在处理)： %d \n";
     FORMAT_LINE=FORMAT_LINE"  ***  三方通过：%d  三方未通过：%d   三方未出结果(文件未到齐或正在处理)： %d \n";
 
+    
+    
     # FORMAT_LINE=FORMAT_LINE"# 总结果数： %d\n";
     
-    
+    VALID_CNT_RATIO = ((UNMATCH_CNT+USE_FOR_RESULT_CNT)/INCOMING_CNT)*100;
+    VALID_SIZE_RATIO = (INCOMING_VALID_SIZE_M/INCOMING_TOTAL_SIZE_M)*100;
 
     printf(FORMAT_LINE,\
     ALL_RESULT,
-    FORCE_REDO_LINE, HAVE_FURDER,
+    INCOMING_TOTAL_SIZE_M/1024, INCOMING_VALID_SIZE_M/1024,
+    INCOMING_CNT, USE_FOR_RESULT_CNT,UNMATCH_CNT,
+    VALID_CNT_RATIO,VALID_SIZE_RATIO,
+    FORCE_REDO_LINE, HAVE_FURDER, 
     PASS2WAY,UNPASS2WAY,WAITING2_FILES,
     PASS3WAY,UNPASS3WAY,WAITING3_FILES);
 }
