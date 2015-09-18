@@ -36,6 +36,7 @@ BEGIN{
 }
 
 function dumpOneResult(){
+
     if ( CURRENT_RESULT && \
         (!HAVE_RESULT_FLAG || \
          !RESUL_CHECK_SUCCESS_FLAG || \
@@ -56,8 +57,8 @@ function dumpOneResult(){
         if(A_FILE_ROW) printf("%s\n",A_FILE_ROW); 
         if(B_FILE_ROW) printf("%s\n",B_FILE_ROW); 
         if(C_FILE_ROW) printf("%s\n",C_FILE_ROW); 
-        # if(L_FILE_ROW) printf("%s\n",L_FILE_ROW); 
-        # if(R_FILE_ROW) printf("%s\n",R_FILE_ROW); 
+        if(L_FILE_ROW) printf("%s\n",L_FILE_ROW); 
+        if(R_FILE_ROW) printf("%s\n",R_FILE_ROW); 
         
         
         printf("%s",SHOW_LINES);
@@ -87,8 +88,8 @@ function dumpOneResult(){
     A_FILE_ROW = "";
     B_FILE_ROW = "";
     C_FILE_ROW = "";
-    # L_FILE_ROW = "";
-    # R_FILE_ROW = "";
+    L_FILE_ROW = "";
+    R_FILE_ROW = "";
     
     ALL_RESULT++;
     if(HAVE_RESULT_FLAG){ # 比对出结果
@@ -223,7 +224,7 @@ function dumpOneResult(){
         # print CURRENT_COMPARE_TYPE
         split(_str,_ARR, "+");
         TYPE    =    "#";
-        # print _ARR[1],_ARR[2],_ARR[3]
+        # print ONEROW,_ARR[1],_ARR[2],_ARR[3]
         if(match(ONEROW,_ARR[1]) || match(ONEROW,_ARR[2]) ||
         (M3_FLAG && match(ONEROW,_ARR[3]))){
             

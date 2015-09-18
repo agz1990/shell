@@ -321,8 +321,14 @@ END{
             INCOMING_TOTAL_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE];
             if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET2_CREATE_TIME_STAMP] && \
             ! match(_RET[__RET2_L_FILE_NAME],"NULL")){
-                HAVE_FURDER         =    1;
-                STATE_SYMBLE        =    " + "
+                SIDE_SYMBLE = getOneFileSideSymble(FILE_NAME,_RET[__RET2_COMPARE_TYPE]);
+                if(SIDE_SYMBLE != "-"){
+                    HAVE_FURDER        =    1;
+                    STATE_SYMBLE       =    " + "
+                } else {
+                    STATE_SYMBLE       =    " - "
+                }
+                # print SIDE_SYMBLE,RESULT2_ARRAY[_biz_privince_code]
             } else if(STATE == 4 || STATE == 6){
                 STATE_SYMBLE    =    " ! ";
             } else if(FILE_NAME == _RET[__RET2_L_FILE_NAME]){
@@ -429,8 +435,15 @@ END{
             # print _RET[__RET3_A_FILE_NAME],_RET[__RET3_B_FILE_NAME],_RET[__RET3_C_FILE_NAME]
             if(_ONE_FILE_ROW[__MICM_INCOMING_TIME_STAMP] >= _RET[__RET3_CREATE_TIME_STAMP] && \
             ! match(_RET[__RET3_A_FILE_NAME],"NULL")){
-                HAVE_FURDER        =    1;
-                STATE_SYMBLE       =    " + "
+                SIDE_SYMBLE = getOneFileSideSymble(FILE_NAME,_RET[__RET3_COMPARE_TYPE]);
+                print _biz_privince_code, SIDE_SYMBLE
+                if(SIDE_SYMBLE != "-"){
+                    HAVE_FURDER        =    1;
+                    STATE_SYMBLE       =    " + "
+                } else {
+                    STATE_SYMBLE       =    " - "
+                }
+               
             } else if(STATE == 4 || STATE == 6){
                 STATE_SYMBLE    =    " ! ";
             } else if(FILE_NAME == _RET[__RET3_A_FILE_NAME]){

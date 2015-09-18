@@ -239,6 +239,7 @@ headDump(){
     $ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
     $ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
     $ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
+    $ECHO "# 配置文件路径     : $conf_file"
     $ECHO "# 命令执行时间     : $CMD_TIME"
     $ECHO "################################################################################"
     $ECHO
@@ -248,25 +249,36 @@ headDump(){
 init ()
 {
      . cfConfigFile.sh
-     
-    conf_file=/home/jigc/conf/get-month-check-table.conf
-    if [ ! -f ${conf_file} ];then
-        echo "conf file [${conf_file}] not exist,exit!"
-        exit 1
+    if [ -f $HOME/conf/get-month-check-table.conf ];then 
+        conf_file=$HOME/conf/get-month-check-table.conf
+    else
+        conf_file=$DQAS_HOME/conf/get-month-check-table.conf
+        if [ ! -f ${conf_file} ];then
+            echo "conf file [${conf_file}] not exist,exit!"
+            exit 1
+        fi
     fi
     
-    MEARGE_RESULT_IMCOMING_TABLE_AWK=/home/jigc/bin/merge-result-incoiming-table.awk
-    # MEARGE_RESULT_IMCOMING_TABLE_AWK=merge-result-incoiming-table.awk
-    if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
-        echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
-        exit 1
+    if [ -f $HOME/bin/merge-result-incoiming-table.awk ];then
+        MEARGE_RESULT_IMCOMING_TABLE_AWK=$HOME/bin/merge-result-incoiming-table.awk
+    else
+        MEARGE_RESULT_IMCOMING_TABLE_AWK=$DQAS_HOME/bin/merge-result-incoiming-table.awk
+        if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
+            echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
+            exit 1
+        fi
     fi
-    
-    SUGGEST_REDO_LIST_AWK=/home/jigc/bin/suggest-redo-list.awk
-    if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
-        echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
-        exit 1
-    fi
+   
+     if [ -f $HOME/bin/suggest-redo-list.awk ];then
+        SUGGEST_REDO_LIST_AWK=$HOME/bin/suggest-redo-list.awk
+     else
+        SUGGEST_REDO_LIST_AWK=$DQAS_HOME/bin/suggest-redo-list.awk
+        if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
+            echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
+            exit 1
+        fi
+     fi
+  
     
     cfInit ${conf_file} noLock readOnly
     dbsid=$(cfGetConfigItem common dbsid)
