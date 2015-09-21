@@ -274,6 +274,15 @@ NF == 9 && $0 ~ /MONTH_INCOMING$/ {
         # "date -d \""_timstr"\" +%s" | getline INCOMING_TIME_STAMP;
         # close("date -d \""_timstr"\" +%s")
     }
+    
+    if (BIZ_PRIVINCE_CODE == "NULL"){ # fix BIZ_PRIVINCE_CODE
+        # FLAT_20150815010000_0005100.0002241498.gz
+        if(length(FILE_NAME) == 41){
+            BIZ_PRIVINCE_CODE = substr(FILE_NAME, 21, 7);
+            # print "#####"BIZ_PRIVINCE_CODE, FILE_NAME;
+        }
+    }
+    
     _timstr=INCOMING_TIME
     gsub(/[#:-]/," ", _timstr);
     INCOMING_TIME_STAMP=mktime(_timstr)
