@@ -44,7 +44,7 @@ function dumpOneResult(){
          NEW_COMING_FLAG || \
          FORCE_REDO_FALG)){
     
-        if(UNPASS_FLAG || FORCE_REDO_FALG) {
+        if(!RESUL_PASS_THRESHOLD_FLAG || FORCE_REDO_FALG) {
             sub(/\|-\|/,"|R|", CURRENT_RESULT); 
         }
     
