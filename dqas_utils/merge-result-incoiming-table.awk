@@ -378,12 +378,15 @@ END{
         # print "@"L_FLAG,R_FLAG,VALID_RESULT
         RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M2|\n";
         
-        VALID_RESULT       =    "-"
-        RESULT_CHECK       =    "-"
-        VALID_RATIO        =    "-"
+        MATCHED_FALG       =    "-";
+        VALID_RESULT       =    "-";
+        RESULT_CHECK       =    "-";
+        VALID_RATIO        =    "-";
         FURDER_RESULT      =    "%";
         # print 
+        
         if(L_FLAG == "LLL" && R_FLAG == "RRR"){
+            MATCHED_FALG         =    "%";
             VALID_RESULT    =    "%"
             
             if(recheckresultLine(RESULT2_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
@@ -402,11 +405,15 @@ END{
             if(HAVE_FURDER){
                 FURDER_RESULT    =    "-";
             }
+        } else if(L_FLAG == "-L-" && R_FLAG == "-R-"){ 
+            MATCHED_FALG         =    "%";
+        } else {
+            MATCHED_FALG         =    "-"
         }
         
         
         printf(RESULT2_OUTPUT_FORMAT, \
-        VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
+        MATCHED_FALG""VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
         _RET[__RET2_BIZ_PRIVINCE_CODE],_RET[__RET2_COMFORM_RATIO],\
         L_FLAG,R_FLAG,"---",\
         _RET[__RET2_CREATE_TIME],\
@@ -508,6 +515,7 @@ END{
         RESULT3_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M3|\n";
         if(A_FLAG == "AAA" && B_FLAG == "BBB" && C_FLAG == "CCC"){
             VALID_RESULT    =    "%"
+            MATCHED_FALG         =    "%";
             
             if(recheckresultLine(RESULT3_ARRAY[_biz_privince_code])){ # 校验双方结果是否正确
                 # 校验通过
@@ -524,10 +532,14 @@ END{
                 FURDER_RESULT    =    "-";
             }
             
+        } else if(A_FLAG == "-A-" && B_FLAG == "-B-" && C_FLAG == "-C-"){ 
+            MATCHED_FALG         =    "%";
+        } else {
+            MATCHED_FALG         =    "-";
         }
     
         printf(RESULT3_OUTPUT_FORMAT, \
-        VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
+        MATCHED_FALG""VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
         _RET[__RET3_BIZ_PRIVINCE_CODE],_RET[__RET3_COMFORM_RATIO],\
         A_FLAG,B_FLAG,C_FLAG,\
         _RET[__RET3_CREATE_TIME],\

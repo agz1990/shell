@@ -23,14 +23,19 @@ BEGIN{
     CHECK_ERROR3_CNT =   0;
     WAITING2_FILES   =   0;
     WAITING3_FILES   =   0;
+    WAITING2_COMPARE =   0;
+    WAITING3_COMPARE =   0;
     HAVE_FURDER      =   0;
     FORCE_REDO_LINE  =   0;
     
     INCOMING_CNT    =   0;
-    USE_FOR_RESULT_CNT  =   0;  # 已经生成结果的文件
-    UNMATCH_CNT         =   0;  # 未匹配成功的结果
-    INCOMING_TOTAL_SIZE_M =   0;
-    INCOMING_VALID_SIZE_M =   0;
+    WAITING_FIMES_CNT = 0;
+    USE_FOR_RESULT_CNT      =   0;  # 已经生成结果的文件
+    INCOMING_TOTAL_SIZE_M   =   0;  # 所有文件总大小
+    HAVING_RESULT_SIZE_M    =   0;  # 出结果的文件总大小
+    WAITING_COMPARE_SIZE_M  =   0;  # 匹配成功但是未出结果的文件总大小
+    UNMATCH_SIZE_M          =   0;  # 未匹配成功的文件大小      
+    
     
     # awk -f suggest-redo-list.awk FORCE_PATTERN="00822.." ./output/month_redo_output_201508.20150914163440
 }
@@ -75,11 +80,16 @@ function dumpOneResult(){
     
     split($2,__FLAGS,"");
     
-    HAVE_RESULT_FLAG            =    __FLAGS[1] == "%" ? 1 : 0;
-    RESUL_CHECK_SUCCESS_FLAG    =    __FLAGS[2] == "%" ? 1 : 0;
-    RESUL_PASS_THRESHOLD_FLAG   =    __FLAGS[3] == "%" ? 1 : 0;
-    HAVE_FURTER_FLAG            =    __FLAGS[4] == "%" ? 1 : 0;
+    MATCHED_FALG                =    __FLAGS[1] == "%" ? 1 : 0;
+    HAVE_RESULT_FLAG            =    __FLAGS[2] == "%" ? 1 : 0;
+    RESUL_CHECK_SUCCESS_FLAG    =    __FLAGS[3] == "%" ? 1 : 0;
+    RESUL_PASS_THRESHOLD_FLAG   =    __FLAGS[4] == "%" ? 1 : 0;
+    HAVE_FURTER_FLAG            =    __FLAGS[5] == "%" ? 1 : 0;
     BIZ_PRIVINCE_CODE           =    $3;
+    A_FLAG                      =    $5
+    B_FLAG                      =    $6
+    C_FLAG                      =    $7
+    
 
     CURRENT_RESULT     = $0;
     M3_FLAG            =    match(CURRENT_RESULT, /\|M3\|$/);
@@ -121,11 +131,43 @@ function dumpOneResult(){
            
         }
        
-    } else {    # 还未得出结果
-        if(M3_FLAG) 
+    } else if(MATCHED_FALG){    # 还未得出结果
+         if(M3_FLAG){
+         
+            UNMATCH_CNT+=3;
+            WAITING3_COMPARE ++;
+         }
+         else {
+            UNMATCH_CNT+=2;
+            WAITING2_COMPARE ++;
+         }
+           
+    } else { # 文件未到齐
+    
+        if(M3_FLAG) {
             WAITING3_FILES++;
-        else 
+        }
+        else {
             WAITING2_FILES++;
+        }
+
+        if(A_FLAG == "---"){
+           WAITING_FIMES_CNT++;
+        }else{
+            UNMATCH_CNT++;
+        }
+        
+        if(B_FLAG == "---"){
+            WAITING_FIMES_CNT++;
+        }else {
+            UNMATCH_CNT++;
+        }
+        
+        if(M3_FLAG && C_FLAG == "---"){
+            WAITING_FIMES_CNT++;
+        }else {
+            UNMATCH_CNT
+        }
     }
 
 }
@@ -140,12 +182,10 @@ function dumpOneResult(){
     
     if(STATE_SYMBLE == "AAA" || STATE_SYMBLE == "BBB" || STATE_SYMBLE == "CCC" || \
        STATE_SYMBLE == "LLL"  || STATE_SYMBLE == "RRR" ){
-        USE_FOR_RESULT_CNT  ++;
-        INCOMING_VALID_SIZE_M += FILE_SIZE_M;
+        HAVING_RESULT_SIZE_M += FILE_SIZE_M;
     }
-  
-    
-    if(HAVE_RESULT_FLAG){
+
+    if(MATCHED_FALG && HAVE_RESULT_FLAG){
     
         if(!RESUL_CHECK_SUCCESS_FLAG){
             MARK_SYMBLE =   "E";
@@ -177,43 +217,14 @@ function dumpOneResult(){
         
         }
     
-    } else { # 未出结果(一般是文件未到齐)
-        if(match(STATE_SYMBLE, / [ABCLR] /)){
-            UNMATCH_CNT ++;
-            INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-        }
+    }
     
-        # if(STATE_SYMBLE == " - "){
-            # _str=CURRENT_COMPARE_TYPE
-            # gsub(/_/,".*", _str); 
-            # print _str
-            # split(_str,_ARR, "+");
-            # TYPE    =    "#";
-            # print FILE_NAME,_ARR[1],_ARR[2],_ARR[3],match(FILE_NAME,_ARR[1])
-            # if(match(FILE_NAME,_ARR[1])){
-                # TYPE=  M3_FLAG ? "A" : "L";
-                # sub(/ \| - \|/,"U| "TYPE" |", ONEROW);
-                # UNMATCH_CNT ++;
-                # INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-                # A_FILE_ROW = ONEROW;
-                # next;    
-            # } else if(match(FILE_NAME,_ARR[2])){
-                # TYPE=  M3_FLAG ? "B" : "R";
-                # sub(/\| - \|/," U| "TYPE" |", ONEROW); 
-                # UNMATCH_CNT ++;
-                # INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-                # B_FILE_ROW = ONEROW;
-                # next
-            # } else if(match(FILE_NAME,_ARR[3]) && M3_FLAG){
-                # TYPE="C";
-                # sub(/\| - \|/," U| "TYPE" |", ONEROW); 
-                # UNMATCH_CNT ++;
-                # INCOMING_VALID_SIZE_M += FILE_SIZE_M;
-                # C_FILE_ROW = ONEROW;
-                # next;
-            # } 
-        # } 
-    } 
+    if(MATCHED_FALG && !HAVE_RESULT_FLAG){
+        WAITING_COMPARE_SIZE_M += FILE_SIZE_M;
+    }else if(!MATCHED_FALG){
+        UNMATCH_SIZE_M += FILE_SIZE_M;
+    }
+    
     
 
 
@@ -244,35 +255,33 @@ END{
     FORMAT_LINE=FORMAT_LINE"  ***  每月需要文件总数: %d  双方文件: %d  三方文件: %d\n\n"
 
     FORMAT_LINE=FORMAT_LINE"  ***  本月 MONTH_INCOMING 状态汇总:\n"
-    FORMAT_LINE=FORMAT_LINE"  ***  传输文件总大小: %6.2f (G)  有效文件总大小: %6.2f (G) \n";
-    FORMAT_LINE=FORMAT_LINE"  ***  传输总数: %d  匹配成功: %d 等待匹配: %d  还差: %d\n";
-    FORMAT_LINE=FORMAT_LINE"  ***  文件个数有效百分比: %6.2f %  文件大小有效百分百: %6.2f % \n\n";
+    FORMAT_LINE=FORMAT_LINE"  ***  传输总数: %d  等待比对: %d  等待重传: %d \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  传输文件总大小: %6.2f (G)  跑出结果: %6.2f (G)  等待比对: %6.2f (M) 等待匹配: %6.2f (M)\n\n";
+
     
     FORMAT_LINE=FORMAT_LINE"  ***  结果统计 MONTH_TWO(THREE)_FILE_COMPARE  统计汇总：\n"
     FORMAT_LINE=FORMAT_LINE"  ***  强制重跑: %d  有新文件未处理的结果个数： %d\n";
-    FORMAT_LINE=FORMAT_LINE"  ***  双方通过：%3d  未通过：%3d  结果校验出错：%3d 未出结果(文件未到齐或正在处理): %d \n";
-    FORMAT_LINE=FORMAT_LINE"  ***  三方通过：%3d  未通过：%3d  结果校验出错：%3d 未出结果(文件未到齐或正在处理): %d \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  【双方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 双方通过：%3d \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  【三方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 双方通过：%3d \n";
 
+    
+       
     
     
     # FORMAT_LINE=FORMAT_LINE"# 总结果数： %d\n";
     
-    VALID_CNT       =   UNMATCH_CNT+USE_FOR_RESULT_CNT;
-    VALID_CNT_RATIO = (VALID_CNT/INCOMING_CNT)*100;
-    VALID_SIZE_RATIO = (INCOMING_VALID_SIZE_M/INCOMING_TOTAL_SIZE_M)*100;
     
-    M2_TOTAL_CNT    =   PASS2WAY + CHECK_ERROR2_CNT + UNPASS2WAY + WAITING2_FILES;
-    M3_TOTAL_CNT    =   PASS3WAY + CHECK_ERROR3_CNT + UNPASS3WAY + WAITING3_FILES;
+    M2_TOTAL_CNT    =  WAITING2_FILES + WAITING2_COMPARE + CHECK_ERROR2_CNT + UNPASS2WAY +PASS2WAY;
+    M3_TOTAL_CNT    =  WAITING3_FILES + WAITING3_COMPARE + CHECK_ERROR3_CNT + UNPASS3WAY +PASS3WAY;
     
     MONTH_TOTAL_VALID_CNT   =   M3_TOTAL_CNT * 3 +  M2_TOTAL_CNT * 2;
     
     printf(FORMAT_LINE,\
     ALL_RESULT,M2_TOTAL_CNT,M3_TOTAL_CNT,\
     MONTH_TOTAL_VALID_CNT, M2_TOTAL_CNT * 2, M3_TOTAL_CNT * 3,\
-    INCOMING_TOTAL_SIZE_M/1024, INCOMING_VALID_SIZE_M/1024,\
-    INCOMING_CNT, USE_FOR_RESULT_CNT,UNMATCH_CNT,MONTH_TOTAL_VALID_CNT - VALID_CNT,\
-    VALID_CNT_RATIO,VALID_SIZE_RATIO,\
+    INCOMING_CNT, UNMATCH_CNT, WAITING_FIMES_CNT,\
+    INCOMING_TOTAL_SIZE_M/1024, (HAVING_RESULT_SIZE_M+1)/1024,WAITING_COMPARE_SIZE_M,UNMATCH_SIZE_M,\
     FORCE_REDO_LINE, HAVE_FURDER,\
-    PASS2WAY,UNPASS2WAY,CHECK_ERROR2_CNT,WAITING2_FILES,\
-    PASS3WAY,UNPASS3WAY,CHECK_ERROR3_CNT,WAITING3_FILES);
+    WAITING2_FILES,WAITING2_COMPARE,CHECK_ERROR2_CNT,UNPASS2WAY,PASS2WAY,\
+    WAITING3_FILES,WAITING3_COMPARE,CHECK_ERROR3_CNT,UNPASS3WAY,PASS3WAY);
 }
