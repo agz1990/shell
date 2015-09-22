@@ -262,7 +262,7 @@ END{
     FORMAT_LINE=FORMAT_LINE"  ***  结果统计 MONTH_TWO(THREE)_FILE_COMPARE  统计汇总：\n"
     FORMAT_LINE=FORMAT_LINE"  ***  强制重跑: %d  有新文件未处理的结果个数： %d\n";
     FORMAT_LINE=FORMAT_LINE"  ***  【双方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 双方通过：%3d \n";
-    FORMAT_LINE=FORMAT_LINE"  ***  【三方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 双方通过：%3d \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  【三方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 三方通过：%3d \n";
 
     
        
