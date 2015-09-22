@@ -77,6 +77,7 @@ cat  << EOF
     标志位1|标志位2|状态位业务代码+省代码|文件名|状态值|文件大小|校验值|文件创建时间|文件标志字段|
     标志位1：
         ' ': 无特殊标志
+        '+': 对标记文件到齐但未出结果的文件进行标记
         'E': 结果校验错误(Error)
         'U': 一般用在三方文件未到齐，预标出三方文件(Unmatch)
         'R': 用于结果为通过预设值，标记出需要重跑的文件 (Redo)
@@ -398,6 +399,20 @@ init ()
     fi
     $ECHO "\n\n\n";
     sed -n -e '/  \*\*\*/,$p' $OUTPUT_DIR/${REDO_OUTPUT_FILE};
+    
+    if [ `whoami` = 'mcbadm1' ];then
+        $ECHO  "\n\n\n[MESSAGE]    拷贝redo文件到小机上(必须是mcbadm1用户才进行拷贝) ..."
+        scp_dst_dir=$(cfGetConfigItem common scp_dst_dir)
+        echo "scp  $OUTPUT_DIR/${REDO_OUTPUT_FILE} ${scp_dst_dir}/redo.txt 2>  /dev/null" | sh -x
+        
+        if [ $? -ne 0 ]; then
+            $ECHO  "[ERROR]    解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
+            exit 1
+        else
+            $ECHO  "[MESSAGE]   拷贝redo文件到小机操作执行成功 ..."
+        fi 
+        $ECHO  "\n"
+    fi
     
 }
 
