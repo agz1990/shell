@@ -36,7 +36,7 @@ BEGIN{
     WAITING_COMPARE_SIZE_M  =   0;  # 匹配成功但是未出结果的文件总大小
     UNMATCH_SIZE_M          =   0;  # 未匹配成功的文件大小      
     
-    
+    MARK_SYMBLE_FLAG        =   "BR"
     # awk -f suggest-redo-list.awk FORCE_PATTERN="00822.." ./output/month_redo_output_201508.20150914163440
 }
 
@@ -185,37 +185,46 @@ function dumpOneResult(){
         HAVING_RESULT_SIZE_M += FILE_SIZE_M;
     }
 
-    if(MATCHED_FALG && HAVE_RESULT_FLAG){
+    if(MATCHED_FALG){
     
-        if(!RESUL_CHECK_SUCCESS_FLAG){
-            MARK_SYMBLE =   "E";
-        } else if(!RESUL_PASS_THRESHOLD_FLAG){
-            MARK_SYMBLE =   "R"
-        } else if(FORCE_REDO_FALG) {
-            MARK_SYMBLE =   "F"
+        if(HAVE_RESULT_FLAG){
+            if(!RESUL_CHECK_SUCCESS_FLAG){
+                MARK_SYMBLE =   "E";
+            } else if(!RESUL_PASS_THRESHOLD_FLAG){
+                MARK_SYMBLE =   "R"
+            } else if(FORCE_REDO_FALG) {
+                MARK_SYMBLE =   "F"
+            }
+        } else {
+             MARK_SYMBLE =   "+";
         }
-         
+        
+        PATTERN=".["MARK_SYMBLE_FLAG"].";
+        # if( match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
+        
     
-        if(STATE_SYMBLE == "AAA"){
+        if(STATE_SYMBLE == "AAA" || STATE_SYMBLE == " A " ){
             # TODO 判断 taskman 是否重启过，如果重启时间在结果时间之前则需呀全部拷贝进行重跑 
+            if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
             A_FILE_ROW = ONEROW;
             next;
-        } else if(STATE_SYMBLE == "BBB"){
-            sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
+        } else if(STATE_SYMBLE == "BBB" || STATE_SYMBLE == " B "){
+            if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
             B_FILE_ROW = ONEROW;
             next;
-        } else if(STATE_SYMBLE == "CCC"){
+        } else if(STATE_SYMBLE == "CCC" || STATE_SYMBLE == " C "){
+            if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
             C_FILE_ROW = ONEROW;
             next;
-        } else if(STATE_SYMBLE == "LLL"){
+        } else if(STATE_SYMBLE == "LLL" || STATE_SYMBLE == " L "){
+            if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
             L_FILE_ROW    = ONEROW;
             next;
-        } else if(STATE_SYMBLE == "RRR"){
+        } else if(STATE_SYMBLE == "RRR" || STATE_SYMBLE == " R "){
+            if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
             R_FILE_ROW = ONEROW;
             next;
-        } else if(STATE_SYMBLE == " + "){
-        
-        }
+        } 
     
     }
     
@@ -260,7 +269,7 @@ END{
 
     
     FORMAT_LINE=FORMAT_LINE"  ***  结果统计 MONTH_TWO(THREE)_FILE_COMPARE  统计汇总：\n"
-    FORMAT_LINE=FORMAT_LINE"  ***  强制重跑: %d  有新文件未处理的结果个数： %d\n";
+    FORMAT_LINE=FORMAT_LINE"  ***  重跑标记方: '%s'  强制重跑: %d  有新文件未处理的结果个数： %d\n";
     FORMAT_LINE=FORMAT_LINE"  ***  【双方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 双方通过：%3d \n";
     FORMAT_LINE=FORMAT_LINE"  ***  【三方】 文件未到齐：%3d;  未得出比对结果: %3d;  结果校验出错：%3d;  通过率未达标：%3d; 三方通过：%3d \n";
 
@@ -281,7 +290,7 @@ END{
     MONTH_TOTAL_VALID_CNT, M2_TOTAL_CNT * 2, M3_TOTAL_CNT * 3,\
     INCOMING_CNT, UNMATCH_CNT, WAITING_FIMES_CNT,\
     INCOMING_TOTAL_SIZE_M/1024, (HAVING_RESULT_SIZE_M+1)/1024,WAITING_COMPARE_SIZE_M,UNMATCH_SIZE_M,\
-    FORCE_REDO_LINE, HAVE_FURDER,\
+    MARK_SYMBLE_FLAG,FORCE_REDO_LINE, HAVE_FURDER,\
     WAITING2_FILES,WAITING2_COMPARE,CHECK_ERROR2_CNT,UNPASS2WAY,PASS2WAY,\
     WAITING3_FILES,WAITING3_COMPARE,CHECK_ERROR3_CNT,UNPASS3WAY,PASS3WAY);
 }

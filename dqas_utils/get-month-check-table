@@ -18,8 +18,8 @@ cat  << EOF
 # Author      : jigc@cmsz.com
 # Script Name : get-month-check-table
 # Description : 月全量检查报表脚本
-# Version     : V3.0
-# Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern]
+# Version     : V3.1
+# Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern] [--mark <sideSymble>]
 
          -m 指定要检查的月份，格式如 -m 201509 (如果不指定默认月份为本月)
          
@@ -29,7 +29,12 @@ cat  << EOF
              example:
                 --force "0022.*"  匹配并标记0022整条业务线
                 --force "0022.*|0082.*"  匹配并标记0022和0082整条业务线
-
+        --mark <sideSymble> 重跑文件标记用于对接重跑脚本用(默认为 sideSymble='BR', 标记B方和R方文件),
+            example：
+                --mark ABCLR  标记所有类型文件
+                --mark B      仅标记B方文件其他文件不标记
+                
+ 
 输出标记字段说明:
 
 结果字段标志:
@@ -104,6 +109,7 @@ cat  << EOF
 #  2015.09.17   V2.0: 添加对结果进行校验，提前判断结果的有效性
 #  2015.09.21   V2.1: 完善帮助信息，添加对 状态1的文件进行处理
 #  2015.09.22   V3.0: 添加对双(三)方是否匹配，和匹配成功但未跑出结果做区分
+#  2015.09.22   V3.1: 添加对重跑结果文件标记的配置参数，可通过 --mark <sideSymbel> 进行标记
 #
 
 
@@ -199,6 +205,10 @@ do
         THRESHOLD="$2"
         shift
         ;;
+    --mark)
+        MARK_SYMBLE_FLAG="$2"
+        shift
+        ;;        
     -h|--help)
         help
         exit
@@ -289,6 +299,7 @@ headDump(){
     $ECHO "# 月份             : $MONTH"
     $ECHO "# 命令行           : $CMD_LINE"
     $ECHO "# 比对阀值         ：$THRESHOLD %"
+    $ECHO "# 重跑标记方       : '$MARK_SYMBLE_FLAG'"
     $ECHO "# 原始结果导入文件 : $RAW_INPUT_FILE"
     $ECHO "# 原始结果输出文件 : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
     $ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
@@ -342,7 +353,7 @@ init ()
     
     OUTPUT_DIR=$(cfGetConfigItem common outputdir)
     THRESHOLD=${THRESHOLD:=`cfGetConfigItem common threshold`};
-
+    MARK_SYMBLE_FLAG=${MARK_SYMBLE_FLAG:="BR"};
     [ -z "${OUTPUT_DIR}" ] && OUTPUT_DIR="./output/"
 
     headDump
@@ -373,13 +384,13 @@ init ()
         
         $ECHO  "[MESSAGE]    开始统计分析合并结果 ..."
         headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
-        awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_OUTPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+        awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN MARK_SYMBLE_FLAG=$MARK_SYMBLE_FLAG $OUTPUT_DIR/$RAW_OUTPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
         
         
     else
         headDump > $OUTPUT_DIR/${REDO_OUTPUT_FILE}
         
-        awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN  $OUTPUT_DIR/$RAW_INPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
+        awk -f $SUGGEST_REDO_LIST_AWK  FORCE_PATTERN=$FORCE_PATTERN MARK_SYMBLE_FLAG=$MARK_SYMBLE_FLAG $OUTPUT_DIR/$RAW_INPUT_FILE   >> $OUTPUT_DIR/${REDO_OUTPUT_FILE}
         if [ $? -ne 0 ]; then
             $ECHO  "[ERROR]    解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
             exit 1
