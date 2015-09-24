@@ -279,6 +279,8 @@ NF == 9 && $0 ~ /MONTH_INCOMING$/ {
         # FLAT_20150815010000_0005100.0002241498.gz
         if(length(FILE_NAME) == 41){
             BIZ_PRIVINCE_CODE = substr(FILE_NAME, 21, 7);
+            
+            sub(/^9045/,"0045",BIZ_PRIVINCE_CODE);
             # print "#####"BIZ_PRIVINCE_CODE, FILE_NAME;
         }
     }
@@ -376,7 +378,7 @@ END{
             MUL_LINE    =    MUL_LINE"         "LINE;
         }
         # print "@"L_FLAG,R_FLAG,VALID_RESULT
-        RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%3s|%19s|%s|-|M2|\n";
+        RESULT2_OUTPUT_FORMAT="|%s|%s|%6.2f%%|%3s|%3s|%19s|%s|-|M2|\n";
         
         MATCHED_FALG       =    "-";
         VALID_RESULT       =    "-";
@@ -397,11 +399,18 @@ END{
                 # print "UNPASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
             }
             
-
-            if(RESULT_CHECK && (_RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD)){
+            if(RESULT_CHECK == "%" && _RET[__RET2_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD) 
+            {
                 VALID_RATIO     =    "%"
             } 
             
+            if(RESULT_CHECK == "%" && _RET[__RET2_COMFORM_RATIO] == 0 &&
+            (_RET[__RET2_L_RECORD_TOTAL] == 0 || _RET[__RET2_R_RECORD_TOTAL] == 0)){
+                
+                 VALID_RATIO     =    "%"
+            }
+            
+            # print "####"RESULT_CHECK"|"_biz_privince_code"|"_RET[__RET2_COMFORM_RATIO] "|"_RET[__RET2_L_RECORD_TOTAL]"|" _RET[__RET2_R_RECORD_TOTAL]"#"VALID_RATIO"#"(_RET[__RET2_R_RECORD_TOTAL] == 0)
             if(HAVE_FURDER){
                 FURDER_RESULT    =    "-";
             }
@@ -415,7 +424,7 @@ END{
         printf(RESULT2_OUTPUT_FORMAT, \
         MATCHED_FALG""VALID_RESULT""RESULT_CHECK""VALID_RATIO""FURDER_RESULT,\
         _RET[__RET2_BIZ_PRIVINCE_CODE],_RET[__RET2_COMFORM_RATIO],\
-        L_FLAG,R_FLAG,"---",\
+        L_FLAG,R_FLAG,\
         _RET[__RET2_CREATE_TIME],\
         _RET[__RET2_COMPARE_TYPE]);
         sort MUL_LINE
@@ -524,10 +533,17 @@ END{
             }else{
                 # print "UNPASS:"_RET[__RET2_BIZ_PRIVINCE_CODE]"|"_RET[__RET2_L_RECORD_TOTAL]"|"_RET[__RET2_R_RECORD_TOTAL]
             }
-            
-            if( RESULT_CHECK && _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD){
+        
+             
+            if(RESULT_CHECK == "%" && _RET[__RET3_COMFORM_RATIO] >= COMPARE_RATDO_THRESHOLD){
                 VALID_RATIO     =    "%"
             } 
+            
+            if(RESULT_CHECK == "%" && _RET[__RET3_COMFORM_RATIO] == 0 &&
+            (_RET[__RET3_A_RECORD_TOTAL] == 0 ||  _RET[__RET3_B_RECORD_TOTAL]  == 0 || _RET[__RET3_C_RECORD_TOTAL]  != 0)){
+                
+                 VALID_RATIO     =    "%"
+            }
             if(HAVE_FURDER){
                 FURDER_RESULT    =    "-";
             }

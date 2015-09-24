@@ -30,10 +30,12 @@ BEGIN{
     
     INCOMING_CNT    =   0;
     WAITING_FIMES_CNT = 0;
+    REDO_FIMES_CNT = 0;
     USE_FOR_RESULT_CNT      =   0;  # 已经生成结果的文件
     INCOMING_TOTAL_SIZE_M   =   0;  # 所有文件总大小
     HAVING_RESULT_SIZE_M    =   0;  # 出结果的文件总大小
     WAITING_COMPARE_SIZE_M  =   0;  # 匹配成功但是未出结果的文件总大小
+    WAITING_REDO_SIZE_M  =   0;
     UNMATCH_SIZE_M          =   0;  # 未匹配成功的文件大小      
     
     MARK_SYMBLE_FLAG        =   "BR"
@@ -190,14 +192,22 @@ function dumpOneResult(){
         if(HAVE_RESULT_FLAG){
             if(!RESUL_CHECK_SUCCESS_FLAG){
                 MARK_SYMBLE =   "E";
+                REDO_FIMES_CNT++;
+                WAITING_REDO_SIZE_M += FILE_SIZE_M;
             } else if(!RESUL_PASS_THRESHOLD_FLAG){
                 MARK_SYMBLE =   "R"
+                REDO_FIMES_CNT++;
+                WAITING_REDO_SIZE_M += FILE_SIZE_M;
             } else if(FORCE_REDO_FALG) {
                 MARK_SYMBLE =   "F"
+                REDO_FIMES_CNT++;
+                WAITING_REDO_SIZE_M += FILE_SIZE_M;
             }
+           
         } else {
              MARK_SYMBLE =   "+";
         }
+
         
         PATTERN=".["MARK_SYMBLE_FLAG"].";
         # if( match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
@@ -264,8 +274,8 @@ END{
     FORMAT_LINE=FORMAT_LINE"  ***  每月需要文件总数: %d  双方文件: %d  三方文件: %d\n\n"
 
     FORMAT_LINE=FORMAT_LINE"  ***  本月 MONTH_INCOMING 状态汇总:\n"
-    FORMAT_LINE=FORMAT_LINE"  ***  传输总数: %d  等待比对: %d  等待重传: %d \n";
-    FORMAT_LINE=FORMAT_LINE"  ***  传输文件总大小: %6.2f (G)  跑出结果: %6.2f (G)  等待比对: %6.2f (M) 等待匹配: %6.2f (M)\n\n";
+    FORMAT_LINE=FORMAT_LINE"  ***  【文件个数】传输总数: %d  等待比对: %d  等待重跑: %d 等待重传: %d \n";
+    FORMAT_LINE=FORMAT_LINE"  ***  【文件大小】传输文件总大小: %6.2f (G)  跑出结果: %6.2f (G)  等待比对: %6.2f (M) 等待重跑:  %6.2f (M) 等待匹配: %6.2f (M)\n\n";
 
     
     FORMAT_LINE=FORMAT_LINE"  ***  结果统计 MONTH_TWO(THREE)_FILE_COMPARE  统计汇总：\n"
@@ -278,7 +288,7 @@ END{
     
     
     # FORMAT_LINE=FORMAT_LINE"# 总结果数： %d\n";
-    
+
     
     M2_TOTAL_CNT    =  WAITING2_FILES + WAITING2_COMPARE + CHECK_ERROR2_CNT + UNPASS2WAY +PASS2WAY;
     M3_TOTAL_CNT    =  WAITING3_FILES + WAITING3_COMPARE + CHECK_ERROR3_CNT + UNPASS3WAY +PASS3WAY;
@@ -288,8 +298,8 @@ END{
     printf(FORMAT_LINE,\
     ALL_RESULT,M2_TOTAL_CNT,M3_TOTAL_CNT,\
     MONTH_TOTAL_VALID_CNT, M2_TOTAL_CNT * 2, M3_TOTAL_CNT * 3,\
-    INCOMING_CNT, UNMATCH_CNT, WAITING_FIMES_CNT,\
-    INCOMING_TOTAL_SIZE_M/1024, (HAVING_RESULT_SIZE_M+1)/1024,WAITING_COMPARE_SIZE_M,UNMATCH_SIZE_M,\
+    INCOMING_CNT, UNMATCH_CNT, REDO_FIMES_CNT, WAITING_FIMES_CNT,\
+    INCOMING_TOTAL_SIZE_M/1024, (HAVING_RESULT_SIZE_M+1)/1024,WAITING_COMPARE_SIZE_M,WAITING_REDO_SIZE_M,UNMATCH_SIZE_M,\
     MARK_SYMBLE_FLAG,FORCE_REDO_LINE, HAVE_FURDER,\
     WAITING2_FILES,WAITING2_COMPARE,CHECK_ERROR2_CNT,UNPASS2WAY,PASS2WAY,\
     WAITING3_FILES,WAITING3_COMPARE,CHECK_ERROR3_CNT,UNPASS3WAY,PASS3WAY);
