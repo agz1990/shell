@@ -269,6 +269,9 @@ function dumpOneResult(){
 }
 
 END{
+    # 文件结尾将最后的缓存打印出来
+    dumpOneResult();
+    
     FORMAT_LINE="\n\n\n  ***  目标:\n"
     FORMAT_LINE=FORMAT_LINE"  ***  月全量总结果数: %d  双方个数: %d  三方个数: %d\n";
     FORMAT_LINE=FORMAT_LINE"  ***  每月需要文件总数: %d  双方文件: %d  三方文件: %d\n\n"

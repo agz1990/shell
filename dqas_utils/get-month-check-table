@@ -18,8 +18,8 @@ cat  << EOF
 # Author      : jigc@cmsz.com
 # Script Name : get-month-check-table
 # Description : 月全量检查报表脚本
-# Version     : V3.1
-# Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern] [--mark <sideSymble>]
+# Version     : V3.2
+# Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern] [--mark <sideSymble>] [--dump-sql]
 
          -m 指定要检查的月份，格式如 -m 201509 (如果不指定默认月份为本月)
          
@@ -33,7 +33,7 @@ cat  << EOF
             example：
                 --mark ABCLR  标记所有类型文件
                 --mark B      仅标记B方文件其他文件不标记
-                
+        --dump-sql  打开SQL日志
  
 输出标记字段说明:
 
@@ -110,6 +110,7 @@ cat  << EOF
 #  2015.09.21   V2.1: 完善帮助信息，添加对 状态1的文件进行处理
 #  2015.09.22   V3.0: 添加对双(三)方是否匹配，和匹配成功但未跑出结果做区分
 #  2015.09.22   V3.1: 添加对重跑结果文件标记的配置参数，可通过 --mark <sideSymbel> 进行标记
+#  2015.09.24   V3.2: 添加对 --dump-sql 参数，并将 '0015','0014','0022','0021' 4条业务独立使用新规则处理
 #
 
 
@@ -208,7 +209,10 @@ do
     --mark)
         MARK_SYMBLE_FLAG="$2"
         shift
-        ;;        
+        ;; 
+    --dump-sql)
+        DUMP_SQL='YES'
+        ;; 
     -h|--help)
         help
         exit
@@ -222,17 +226,11 @@ shift
 done
 ###################################
 
-getRawResult3Table(){
+dump_sql_get_m3_result_rule0(){
     _month=$1;
-    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表 ..." 
-sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
-connect ${dbuser}/${dbpwd}@${dbsid}
-set feedback off
-set heading off
-set linesize 1000
-set pages 0
-set termout off
-set null NULL
+    __RULE0_FILTER="FCV.BIZ_CODE NOT IN ('0015','0014','0022','0021')"
+    
+cat <<SQL
 SELECT 
 FCV.BIZ_CODE || FCV.PROVINCE_CODE BIZ_PRIVINCE_CODE,
 RET.A_FILE_NAME, RET.B_FILE_NAME, RET.C_FILE_NAME, FCV.COMPARE_TYPE,
@@ -241,23 +239,33 @@ RET.N1, RET.N2, RET.N3, RET.N4, RET.N5, RET.N6, RET.N7,
 RET.A_REPEAT_RECORD, RET.B_REPEAT_RECORD, RET.C_REPEAT_RECORD,
 RET.A_RECORD_TOTAL, RET.B_RECORD_TOTAL, RET.C_RECORD_TOTAL,'RESULT3'
 FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_THREE_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '${_month}'
-WHERE COMPARE_WAY = 3  -- and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0082%'
+WHERE COMPARE_WAY = 3  AND ${__RULE0_FILTER} -- and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0082%'
 ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
-/
-EOF
+SQL
 }
 
-getRawResult2Table(){
-    _month=$1;
-    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量双方结果 MONTH_TWO_FILE_COMPARE 表 ..." 
-sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
-connect ${dbuser}/${dbpwd}@${dbsid}
-set feedback off
-set heading off
-set linesize 1000
-set pages 0
-set termout off
-set null NULL
+dump_sql_get_m3_result_rule1(){
+   _month=$1;
+   __RULE1_FILTER="FCV.BIZ_CODE IN ('0015','0014','0022','0021')"
+   __RULE1_COMFORM_RATIO="DECODE(RET.B_RECORD_TOTAL-RET.B_REPEAT_RECORD,0,0,((RET.N1+RET.N2)*100)/(RET.B_RECORD_TOTAL-RET.B_REPEAT_RECORD))"
+cat <<SQL
+SELECT 
+FCV.BIZ_CODE || FCV.PROVINCE_CODE BIZ_PRIVINCE_CODE,
+RET.A_FILE_NAME, RET.B_FILE_NAME, RET.C_FILE_NAME, FCV.COMPARE_TYPE,
+TO_CHAR(RET.CREATE_TIME, 'YYYY-MM-DD#HH24:MI:SS'), ${__RULE1_COMFORM_RATIO},
+RET.N1, RET.N2, RET.N3, RET.N4, RET.N5, RET.N6, RET.N7, 
+RET.A_REPEAT_RECORD, RET.B_REPEAT_RECORD, RET.C_REPEAT_RECORD,
+RET.A_RECORD_TOTAL, RET.B_RECORD_TOTAL, RET.C_RECORD_TOTAL,'RESULT3'
+FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_THREE_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '${_month}'
+WHERE COMPARE_WAY = 3  and ${__RULE1_FILTER} 
+ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
+SQL
+}
+
+
+dump_sql_get_m2_result_rule0(){
+   _month=$1;
+cat <<SQL
 SELECT 
 FCV.BIZ_CODE || FCV.PROVINCE_CODE BIZ_PRIVINCE_CODE,
 RET.LEFT_FILE_NAME, RET.RIGHT_FILE_NAME, FCV.COMPARE_TYPE,
@@ -268,21 +276,14 @@ RET.LEFT_RECORD, RET.RIGHT_RECORD,'RESULT2'
 FROM FULL_CONFIG_VIEW FCV LEFT  JOIN MONTH_TWO_FILE_COMPARE RET ON (FCV.BIZ_CODE || FCV.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)   AND  RET.STTL_DT = '${_month}'
 WHERE COMPARE_WAY = 2  --  and FCV.BIZ_CODE  || FCV.PROVINCE_CODE like '0023%'
 ORDER BY FCV.BIZ_CODE || FCV.PROVINCE_CODE
-/
-EOF
+SQL
 }
 
 
-getMonthIncomingTable(){ 
-    _month=$1;
-    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量 MONTH_INCOMING 表 ..." 
-sqlplus -S /nolog <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
-connect ${dbuser}/${dbpwd}@${dbsid}
-set feedback off
-set heading off
-set linesize 1000
-set null NULL
-set pages 0
+
+dump_sql_get_month_incoming_table(){
+   _month=$1;
+cat <<SQL
 SELECT
 BIZ_CODE || PROVINCE_CODE BIZ_PRIVINCE_CODE,
 FILE_NAME, FILE_SIZE, CKSUM_VALUE, STATE, 
@@ -290,6 +291,94 @@ RESEND_NUM, VALIDITY, TO_CHAR(INCOMING_TIME, 'YYYY-MM-DD#HH24:MI:SS'), 'MONTH_IN
 FROM MONTH_INCOMING 
 WHERE STTL_DT='${_month}' -- and BIZ_CODE || PROVINCE_CODE like '0082%'
 ORDER BY INCOMING_TIME
+SQL
+}
+
+
+getRawResult3Table_rule0(){
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表(通用规则) ..." 
+    
+    if [ "${DUMP_SQL}" == 'YES' ]; then
+        $ECHO  "[SQL]: "
+        dump_sql_get_m3_result_rule0 $1
+        $ECHO "\n\n"
+    fi
+
+    
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+set termout off
+set null NULL
+`dump_sql_get_m3_result_rule0 $1`
+/
+EOF
+}
+
+
+getRawResult3Table_rule1(){
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表(规则1) ..." 
+
+    if [ "${DUMP_SQL}" == 'YES' ]; then
+        $ECHO  "[SQL]: "
+        dump_sql_get_m3_result_rule1 $1
+        $ECHO "\n\n"
+    fi
+sqlplus -S /nolog  <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+set termout off
+set null NULL
+`dump_sql_get_m3_result_rule1 $1`
+/
+EOF
+}
+
+getRawResult2Table_rule0(){
+    _month=$1;
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量双方结果 MONTH_TWO_FILE_COMPARE 表 ..." 
+    if [ "${DUMP_SQL}" == 'YES' ]; then
+        $ECHO  "[SQL]: "
+        dump_sql_get_m2_result_rule0 $1
+        $ECHO "\n\n"
+    fi
+    
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+set termout off
+set null NULL
+`dump_sql_get_m2_result_rule0 $1`
+/
+EOF
+}
+
+
+getMonthIncomingTable(){ 
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量 MONTH_INCOMING 表 ..." 
+
+    if [ "${DUMP_SQL}" == 'YES' ]; then
+        $ECHO  "[SQL]: "
+        dump_sql_get_month_incoming_table $1
+        $ECHO "\n\n"
+    fi
+sqlplus -S /nolog <<EOF  >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set null NULL
+set pages 0
+`dump_sql_get_month_incoming_table $1`
 /
 EOF
 }
@@ -305,6 +394,7 @@ headDump(){
     $ECHO "# 异常结果标记文件 : $OUTPUT_DIR/$REDO_OUTPUT_FILE"
     $ECHO "# 强制标记匹配字段 : $FORCE_PATTERN"
     $ECHO "# 配置文件路径     : $conf_file"
+    $ECHO "# 打开SQL日志      : $DUMP_SQL"
     $ECHO "# 命令执行时间     : $CMD_TIME"
     $ECHO "################################################################################"
     $ECHO
@@ -366,8 +456,9 @@ init ()
     if [ ${RAW_INPUT_FILE} == "__DB__" ]; then
         $ECHO  "[MESSAGE]    查询数据库 ..."
         {
-            getRawResult2Table ${MONTH}
-            getRawResult3Table ${MONTH}
+            getRawResult2Table_rule0 ${MONTH}
+            getRawResult3Table_rule0 ${MONTH}
+            getRawResult3Table_rule1 ${MONTH}
             getMonthIncomingTable ${MONTH}
         } 
         
@@ -427,6 +518,7 @@ RAW_OUTPUT_FILE=${RAW_OUTPUT_FILE:="month_raw_output_${MONTH}.${CURRENT_TIME}"};
 REDO_OUTPUT_FILE=${REDO_OUTPUT_FILE:="month_redo_output_${MONTH}.${CURRENT_TIME}"};
 RAW_INPUT_FILE=${RAW_INPUT_FILE:="__DB__"};
 FORCE_PATTERN=${FORCE_PATTERN:""};
+DUMP_SQL=${DUMP_SQL:='NO'}
 
 if [ ${IGNORE_MONTH} == "YES" ];then
     MONTH=${RAW_INPUT_FILE_MONTH}
