@@ -228,7 +228,7 @@ done
 
 dump_sql_get_m3_result_rule0(){
     _month=$1;
-    __RULE0_FILTER="FCV.BIZ_CODE NOT IN ('0015','0014','0022','0021')"
+    __RULE0_FILTER="FCV.BIZ_CODE NOT IN ('0015','0014','0022','0024')"
     
 cat <<SQL
 SELECT 
@@ -246,7 +246,7 @@ SQL
 
 dump_sql_get_m3_result_rule1(){
    _month=$1;
-   __RULE1_FILTER="FCV.BIZ_CODE IN ('0015','0014','0022','0021')"
+   __RULE1_FILTER="FCV.BIZ_CODE IN ('0015','0014','0022','0024')"
    __RULE1_COMFORM_RATIO="DECODE(RET.B_RECORD_TOTAL-RET.B_REPEAT_RECORD,0,0,((RET.N1+RET.N2)*100)/(RET.B_RECORD_TOTAL-RET.B_REPEAT_RECORD))"
 cat <<SQL
 SELECT 
@@ -320,7 +320,7 @@ EOF
 
 
 getRawResult3Table_rule1(){
-    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表(规则1) ..." 
+    $ECHO  "[MESSAGE]    查询 ${_month} 的月全量三方结果 MONTH_THREE_FILE_COMPARE 表(规则1: 比对率=N1+N2/(BOSS总-BOSS重)) ..." 
 
     if [ "${DUMP_SQL}" == 'YES' ]; then
         $ECHO  "[SQL]: "
@@ -490,19 +490,19 @@ init ()
     $ECHO "\n\n\n";
     sed -n -e '/  \*\*\*/,$p' $OUTPUT_DIR/${REDO_OUTPUT_FILE};
     
-    if [ `whoami` = 'mcbadm1' ];then
-        $ECHO  "\n\n\n[MESSAGE]    拷贝redo文件到小机上(必须是mcbadm1用户才进行拷贝) ..."
-        scp_dst_dir=$(cfGetConfigItem common scp_dst_dir)
-        echo "scp  $OUTPUT_DIR/${REDO_OUTPUT_FILE} ${scp_dst_dir}/redo.txt 2>  /dev/null" | sh -x
+    # if [ `whoami` = 'mcbadm1' ];then
+        # $ECHO  "\n\n\n[MESSAGE]    拷贝redo文件到小机上(必须是mcbadm1用户才进行拷贝) ..."
+        # scp_dst_dir=$(cfGetConfigItem common scp_dst_dir)
+        # echo "scp  $OUTPUT_DIR/${REDO_OUTPUT_FILE} ${scp_dst_dir}/redo.txt 2>  /dev/null" | sh -x
         
-        if [ $? -ne 0 ]; then
-            $ECHO  "[ERROR]    解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
-            exit 1
-        else
-            $ECHO  "[MESSAGE]   拷贝redo文件到小机操作执行成功 ..."
-        fi 
-        $ECHO  "\n"
-    fi
+        # if [ $? -ne 0 ]; then
+            # $ECHO  "[ERROR]    解析 [ $RAW_INPUT_FILE ] 文件出错 ..."
+            # exit 1
+        # else
+            # $ECHO  "[MESSAGE]   拷贝redo文件到小机操作执行成功 ..."
+        # fi 
+        # $ECHO  "\n"
+    # fi
     
 }
 

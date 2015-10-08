@@ -15,10 +15,11 @@ BEGIN{
     FS="[[:space:]]+"
     
     COMPARE_RATDO_THRESHOLD    =    90;
+    DEFAULT_RESULT_TIME        =     "2000-01-01#00:00:00";
     INCOMING_CNT               =     0;
-    INCOMING_VALID_CNT         =    0;
-    INCOMING_TOTAL_SIZE        =    0;
-    INCOMING_VALID_SIZE        =    0;
+    INCOMING_VALID_CNT         =     0;
+    INCOMING_TOTAL_SIZE        =     0;
+    INCOMING_VALID_SIZE        =     0;
     
     
     
@@ -146,7 +147,7 @@ NF == 13 && $0 ~ /RESULT2$/ {
     # 时间字符串 2015-08-25#19:11:00
     CREATE_TIME          =    $5;
     if(match(CREATE_TIME,"NULL")){
-        CREATE_TIME = "2000-01-01#00:00:00";
+        CREATE_TIME = DEFAULT_RESULT_TIME;
     }
     _timstr=CREATE_TIME;
     gsub(/[#:-]/," ", _timstr);
@@ -209,7 +210,7 @@ NF == 21 && $0 ~ /RESULT3$/ {
     # 时间字符串 2015-08-25#19:11:00
     CREATE_TIME          =    $6;
     if(match(CREATE_TIME,"NULL")){
-        CREATE_TIME = "2000-01-01#00:00:00";
+        CREATE_TIME = DEFAULT_RESULT_TIME;
     }
     _timstr=CREATE_TIME;
     gsub(/[#:-]/," ", _timstr);
@@ -352,7 +353,10 @@ END{
                 R_FLAG          =    "RRR";
                 INCOMING_VALID_CNT ++;
                 INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
-            }  else {
+            } else if(_ONE_FILE_ROW[__RET2_CREATE_TIME] != DEFAULT_RESULT_TIME){ # 如果已经有结果生成，其他文件则默认标记为 '-'
+                STATE_SYMBLE    =    " - ";
+            } else {
+                
                 SIDE_SYMBLE    =   getOneFileSideSymble(FILE_NAME,_RET[__RET2_COMPARE_TYPE]);
                 if(SIDE_SYMBLE == "L"){
                     L_FLAG          =    "-L-";
@@ -486,6 +490,8 @@ END{
                 C_FLAG            =    "CCC";
                 INCOMING_VALID_CNT ++;
                 INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]                    
+            } else if(_ONE_FILE_ROW[__RET3_CREATE_TIME] != DEFAULT_RESULT_TIME){ # 如果已经有结果生成，其他文件则默认标记为 '-'
+                STATE_SYMBLE    =    " - ";
             } else {
                 SIDE_SYMBLE    =   getOneFileSideSymble(FILE_NAME,_RET[__RET3_COMPARE_TYPE]);
                 if(SIDE_SYMBLE == "A"){

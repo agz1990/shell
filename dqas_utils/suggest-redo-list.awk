@@ -188,7 +188,7 @@ function dumpOneResult(){
     }
 
     if(MATCHED_FALG){
-    
+        MARK_SYMBLE =   " ";
         if(HAVE_RESULT_FLAG){
             if(!RESUL_CHECK_SUCCESS_FLAG){
                 MARK_SYMBLE =   "E";
@@ -216,25 +216,48 @@ function dumpOneResult(){
         if(STATE_SYMBLE == "AAA" || STATE_SYMBLE == " A " ){
             # TODO 判断 taskman 是否重启过，如果重启时间在结果时间之前则需呀全部拷贝进行重跑 
             if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
-            A_FILE_ROW = ONEROW;
+            if(STATE_SYMBLE == "AAA") 
+                A_FILE_ROW = ONEROW;
+            else 
+                SHOW_LINES    =    SHOW_LINES""ONEROW"\n";
+                
             next;
         } else if(STATE_SYMBLE == "BBB" || STATE_SYMBLE == " B "){
             if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
-            B_FILE_ROW = ONEROW;
+            if(STATE_SYMBLE == "BBB") 
+                B_FILE_ROW = ONEROW;
+            else 
+                SHOW_LINES    =    SHOW_LINES""ONEROW"\n";
+                
             next;
         } else if(STATE_SYMBLE == "CCC" || STATE_SYMBLE == " C "){
             if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
-            C_FILE_ROW = ONEROW;
+            if(STATE_SYMBLE == "CCC") 
+                C_FILE_ROW = ONEROW;
+            else 
+                SHOW_LINES    =    SHOW_LINES""ONEROW"\n";
+                
             next;
         } else if(STATE_SYMBLE == "LLL" || STATE_SYMBLE == " L "){
             if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
-            L_FILE_ROW    = ONEROW;
+            if(STATE_SYMBLE == "LLL") 
+                L_FILE_ROW    = ONEROW;
+            else 
+                SHOW_LINES    =    SHOW_LINES""ONEROW"\n";
+                
             next;
         } else if(STATE_SYMBLE == "RRR" || STATE_SYMBLE == " R "){
             if(match(STATE_SYMBLE,PATTERN)) sub(/ \|/,MARK_SYMBLE"|", ONEROW); 
-            R_FILE_ROW = ONEROW;
+            if(STATE_SYMBLE == "RRR") 
+                R_FILE_ROW = ONEROW;
+            else 
+                SHOW_LINES    =    SHOW_LINES""ONEROW"\n";
+                
             next;
-        } 
+        } else {
+        
+        
+        }
     
     }
     
