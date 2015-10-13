@@ -189,6 +189,7 @@ check_more_diff_resutl_file(){
     __L_unmatch=$3
     __diff_ret_file=$4
     __R_unmatch=$5
+    __key_index=$6
 
     __more_ret_file_unzip_name=${__more_ret_file%.*}
     __diff_ret_file_unzip_name=${__diff_ret_file%.*}
@@ -202,7 +203,7 @@ check_more_diff_resutl_file(){
         __more_file_cnt_mustbe=${__R_unmatch};
     fi
     
-    
+    # 规则1 检查 MORE 文件记录数是否等于数据库中的记录数
     if [ -f "${__more_ret_file}" -o  -f "${__more_ret_file_unzip_name}" ]; then
         if [ -f "${__more_ret_file}" -a "${__more_ret_file##*.}" == "gz" ]; then
             __gz_line_cnt=`gzip -dc ${__more_ret_file} | wc -l`
@@ -217,6 +218,9 @@ check_more_diff_resutl_file(){
         fi
     fi
     
+    # 规则2 检查 MORE 是否都不存在于匹配方的原始文件
+    awk_cmd="\$${__key_index}"
+    
     
     # 检查 diff 文件 diff 文件必须第一轮的中间结果文件，和 more文件同时存在
     
@@ -227,6 +231,9 @@ check_more_diff_resutl_file(){
         # PBOSS 第一轮结果文件需要将文件的业务代码改成 800X 
         __first_result_file_name=${__tmp_str/00_200/00_800}
         
+        __tmp_biz_code=${__biz_province_code/800/200}
+        __pare_diff_file_name=`ls -1t RES_DIFF_PBOSS_*_${__tmp_biz_code}* | head -1`
+        
     elif [ ${__biz_province_code:0:1} -eq 9 ]; then  # 以BOSS
     
         # RES_DIFF_BOSS_20151010010000_2002230.0001398425.gz 
@@ -235,24 +242,32 @@ check_more_diff_resutl_file(){
         # PBOSS 第一轮结果文件需要将文件的业务代码改成 900X 
         __first_result_file_name=${__tmp_str/00_200/00_900}
         
+        __tmp_biz_code=${__biz_province_code/900/200}
+        __pare_diff_file_name=`ls -1t RES_DIFF_BOSS_*_${__tmp_biz_code}* | head -1`
+        
     fi
     
     # 三文件必须到期
     __first_result_file_unzip_name=${__first_result_file_name%.*}
+    if [ "${__pare_diff_file_name##*.}" == "gz"  ];then
+        __pare_diff_file_unzip_name=${__pare_diff_file_name%.*}
+    else
+        __pare_diff_file_unzip_name=${__pare_diff_file_name}
+    fi
     
-    # $ECHO  "[xxxxxx]  $__first_result_file_unzip_name $__more_ret_file_unzip_name   $__diff_ret_file_unzip_name"
+    # $ECHO  "[xxxxxx]  $__first_result_file_unzip_name $__more_ret_file_unzip_name   $__pare_diff_file_unzip_name"
 
     
-    if [ -f "${__first_result_file_unzip_name}" -a -f "${__more_ret_file_unzip_name}" -a -f "$__diff_ret_file_unzip_name" ]; then
+    if [ -f "${__first_result_file_unzip_name}" -a -f "${__more_ret_file_unzip_name}" -a -f "$__pare_diff_file_unzip_name" ]; then
         __first_result_file_cnt=`cat ${__first_result_file_unzip_name} | wc -l`
         __more_ret_file_cnt=`cat ${__more_ret_file_unzip_name} | wc -l`
-        __diff_ret_file_cnt=`cat ${__diff_ret_file_unzip_name} | wc -l`
-    elif [ -f "${__first_result_file_name}" -a -f "${__more_ret_file}" -a -f  "${__diff_ret_file}" ]; then
+        __diff_ret_file_cnt=`cat ${__pare_diff_file_unzip_name} | wc -l`
+    elif [ -f "${__first_result_file_name}" -a -f "${__more_ret_file}" -a -f  "${__pare_diff_file_name}" ]; then
         __first_result_file_cnt=`gzip -dc ${__first_result_file_name} | wc -l`
         __more_ret_file_cnt=`gzip -dc ${__more_ret_file} | wc -l`
-        __diff_ret_file_cnt=`gzip -dc ${__diff_ret_file} | wc -l`
+        __diff_ret_file_cnt=`gzip -dc ${__pare_diff_file_name} | wc -l`
     else
-        $ECHO  "[ERROR]     校验 ${__biz_province_code} 中 ${__first_result_file_name}  ${__more_ret_file}   ${__diff_ret_file} 文件未齐全，请检查 ..."
+        $ECHO  "[ERROR]     校验 ${__biz_province_code} 中 ${__first_result_file_name}  ${__more_ret_file}   ${__pare_diff_file_name} 文件未齐全，请检查 ..."
         return 1
     fi
     
@@ -261,7 +276,11 @@ check_more_diff_resutl_file(){
      __unmatch=`expr $__more_ret_file_cnt + $__diff_ret_file_cnt `
         
     if [ ${__first_result_file_cnt} -ne  ${__unmatch} ]; then
-        $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 ${__more_ret_file} 压缩包， [FIRST_RET != MORE + DIFF], FIRST: ${__first_result_file_cnt};  MORE+DIFF: $__more_ret_file_cnt + $__diff_ret_file_cnt = $__unmatch"
+        echo "+ wc -l $__first_result_file_unzip_name $__more_ret_file_unzip_name   $__pare_diff_file_unzip_name "
+        echo "wc -l $__first_result_file_unzip_name $__more_ret_file_unzip_name   $__pare_diff_file_unzip_name " | sh # -x 
+        $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 ${__pare_diff_file_name} 压缩包， [总差异 != MORE + DIFF], 总差异: ${__first_result_file_cnt};  MORE+DIFF: $__more_ret_file_cnt + $__diff_ret_file_cnt = $__unmatch"
+        $ECHO
+        
     fi
     
     return 0
@@ -332,7 +351,7 @@ init ()
     
     # 检查差异文件压缩包里面的记录数是否与数据库中的一致
     awk  '{print $1" "$2" "$3" "$8" "$9}'  $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout | while read line ; do
-        echo $line | read biz_province_code left_file right_file left_unmatch right_unmatch
+        echo $line | read biz_province_code left_file right_file left_unmatch right_unmatch compare_type compare_rule
         
         if [ ${biz_province_code:0:1} -eq 2 ]; then
             # PBOSS 第一轮结果文件需要将文件的业务代码改成 800X 
@@ -351,17 +370,20 @@ init ()
           
             ret_more_file="RES_MORE_${left_file/00_800/00_200}"
             ret_diff_file="RES_DIFF_${right_file/00_800/00_200}"
-            
+            compare_key_index=${compare_rule:0:1} 
             echo "$biz_province_code|$left_file|$right_file|$ret_more_file|$ret_diff_file"
-            check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch
+            check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch $compare_key_index
+            # if [ $? -eq 0 ]; then # 规则1检验通过，进行规则二检验
+                 # echo "xxxx"
+            # fi 
             
         elif [ ${biz_province_code:0:1} -eq 9 ]; then  # BOSS 差异文件细化
   
             ret_diff_file="RES_DIFF_${left_file/00_900/00_200}"
             ret_more_file="RES_MORE_${right_file/00_900/00_200}"
-            
+            compare_key_index=${compare_rule:0:1}
             echo "$biz_province_code|$left_file|$right_file|$ret_diff_file|$ret_more_file"
-            check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch
+            check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch $compare_key_index
         fi
     done
     # 
