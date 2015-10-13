@@ -1,0 +1,390 @@
+#!/bin/ksh
+
+if [ `uname` = "Linux" ]; then
+    ECHO="echo -e" 
+else
+    ECHO="echo " 
+fi
+
+EGREP="egrep"
+
+CMD_LINE="$0 $*"
+CMD_TIME=`date`
+
+
+help(){
+cat  << EOF
+########################################################################
+# Author      : jigc@cmsz.com
+# Script Name : check-wlw-result
+# Description : 物联网差异结果检查脚本
+# Version     : V1.0
+# Usage       : check-wlw-result [-m 201509][--dump-sql] [--filter <pattern> ]
+
+         -m 指定要检查的月份，格式如 -m 201509 (如果不指定默认月份为本月)
+         
+         --filter <pattern>  设置过滤器，该过滤器用于过滤 BIZ_PROVINCE_CODE, 使用正则规则，不匹配的BIZ_PROVINCE_CODE将不检查
+
+        --dump-sql  打开SQL日志
+ 
+输出标记字段说明:
+
+# Log         :
+#  2015.09.15   V1.0: 实现基本功能 
+
+#######################################################################
+EOF
+
+}
+# 测试用
+# | egrep --color "(^\||#[ABC -]#)0022951" 
+
+
+
+#获取参数##########################
+# ARGS=`getopt -a -o m:h -l raw-output:raw-input:force:help -- "$@"`
+#[ $? -ne 0 ] && usage
+#set -- "${ARGS}"
+# eval set -- "${ARGS}"
+# while true
+while [ $# -gt 0 ]; 
+do
+    case "$1" in
+    -m)
+        MONTH="$2"
+        shift
+        ;;
+    --filter)
+        FILTER_PATTERN="$2"
+        shift
+        ;;
+    --dump-sql)
+        DUMP_SQL='YES'
+        ;; 
+    -h|--help)
+        help
+        exit
+        ;;
+        
+    --)
+        break;
+        ;;
+    esac
+shift
+done
+###################################
+
+dump_sql_get_pro2_result_rule0(){
+    _month=$1;
+    
+    if [ -n "${FILTER_PATTERN}" ];then
+        _condiction="and REGEXP_LIKE(CONF.BIZ_CODE||CONF.PROVINCE_CODE ,'${FILTER_PATTERN}')"
+    fi
+    
+cat <<SQL
+SELECT 
+CONF.BIZ_CODE || CONF.PROVINCE_CODE BIZ_PRIVINCE_CODE,
+RET.LEFT_FILE_NAME, RET.RIGHT_FILE_NAME, CONF.COMPARE_FS COMPARE_TYPE, RET.COMPARE_RULE,
+TO_CHAR(RET.CREATE_TIME, 'YYYY-MM-DD#HH24:MI:SS'), RET.STTL_DT, -- RET.COMFORM_RATIO,
+RET.LEFT_UNMATCH, RET.RIGHT_UNMATCH,
+RET.LEFT_ERR_RECORD, RET.RIGHT_ERR_RECORD, 
+RET.LEFT_RECORD, RET.RIGHT_RECORD
+FROM BIZ_CONFIG CONF LEFT  JOIN TWO_FILE_COMPARE RET ON (CONF.BIZ_CODE || CONF.PROVINCE_CODE) = (RET.BIZ_CODE || RET.PROVINCE_CODE)  AND TO_CHAR(RET.STTL_DT, 'YYYYMM') = '${_month}'
+WHERE REGEXP_LIKE(CONF.BIZ_CODE||CONF.PROVINCE_CODE ,'^[289]00[12345](571|531|371|230)') ${_condiction}
+ORDER BY CONF.BIZ_CODE || CONF.PROVINCE_CODE
+SQL
+}
+
+getRawResult2Table_rule0(){
+    $ECHO  "[MESSAGE]    查询 ${_month} 的物联网双方结果 TWO_FILE_COMPARE 表..." 
+    
+    if [ "${DUMP_SQL}" == 'YES' ]; then
+        $ECHO  "[SQL]: "
+        dump_sql_get_pro2_result_rule0 $1
+        $ECHO "\n\n"
+    fi
+
+    
+sqlplus -S /nolog <<EOF >> $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+connect ${dbuser}/${dbpwd}@${dbsid}
+set feedback off
+set heading off
+set linesize 1000
+set pages 0
+set termout off
+set null NULL
+`dump_sql_get_pro2_result_rule0 $1`
+/
+EOF
+}
+
+
+headDump(){
+    $ECHO "################################################################################"
+    $ECHO "# 月份                       : $MONTH"
+    $ECHO "# 命令行                     : $CMD_LINE"
+    $ECHO "# 原始结果导入文件           : $RAW_INPUT_FILE"
+    $ECHO "# 原始结果输出文件           : $OUTPUT_DIR/$RAW_OUTPUT_FILE"
+    $ECHO "# 配置文件路径               : $conf_file"
+    $ECHO "# BIZ_PROVINCE_CODE 过滤条件 : $FILTER_PATTERN"
+    $ECHO "# 打开SQL日志                : $DUMP_SQL"
+    $ECHO "# 命令执行时间               : $CMD_TIME"
+    $ECHO "################################################################################"
+    $ECHO
+}
+
+check_left_right_resutl_file(){
+    __biz_province_code=$1
+    __L_ret_file=$2
+    __L_unmatch=$3
+    __R_ret_file=$4
+    __R_unmatch=$5
+    
+    __gz_line_cnt=0
+    
+    __L_ret_file_unzip_name=${__L_ret_file%.*}
+    if [ -f "${__L_ret_file}" -o  -f "${__L_ret_file_unzip_name}" ]; then
+        
+        if [ -f "${__L_ret_file}" -a "${__L_ret_file##*.}" == "gz" ]; then
+            __gz_line_cnt=`gzip -dc ${__L_ret_file} | wc -l`
+        else
+            __gz_line_cnt=`cat ${__L_ret_file_unzip_name} | wc -l`
+        fi
+        
+        if [ ${__gz_line_cnt} -ne ${__L_unmatch} ]; then
+            $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 L 差异压缩包中的记录数:  ${__gz_line_cnt}  与数据库中记录数：${__L_unmatch} 不匹配 ..."
+        fi
+
+    else
+        $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 L 端差异文件不存在 ..."
+    fi
+    
+    
+    __gz_line_cnt=0
+    __R_ret_file_unzip_name=${__R_ret_file%.*}
+    if [ -f "${__R_ret_file}" -o -f "${__R_ret_file%.*}" ]; then
+        
+        if [ -f "${__R_ret_file}" -a "${__R_ret_file##*.}" == "gz" ]; then
+            __gz_line_cnt=`gzip -dc ${__R_ret_file} | wc -l`
+        else
+            __gz_line_cnt=`cat ${__R_ret_file_unzip_name} | wc -l`
+        fi
+        
+        if [ ${__gz_line_cnt} -ne ${__R_unmatch} ]; then
+            $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 R 端差异压缩包中的记录数:  ${__gz_line_cnt}  与数据库中记录数：${__R_unmatch} 不匹配 ..."
+        fi
+        
+    else
+        $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 R 端差异文件不存在 ..."
+    fi     
+}
+
+#
+#
+#
+check_more_diff_resutl_file(){
+
+    __biz_province_code=$1
+    __more_ret_file=$2
+    __L_unmatch=$3
+    __diff_ret_file=$4
+    __R_unmatch=$5
+
+    __more_ret_file_unzip_name=${__more_ret_file%.*}
+    __diff_ret_file_unzip_name=${__diff_ret_file%.*}
+    
+    
+    
+    # 检查 more 文件
+    if [ ${__biz_province_code:0:1} -eq 8 ]; then  # 以PBOSS的第一轮差异文件做基准则more文件记录数需要和左侧一致
+        __more_file_cnt_mustbe=${__L_unmatch};
+    elif [ ${__biz_province_code:0:1} -eq 9 ]; then  # 以BOSS的第一轮差异文件做基准则more文件记录数需要和右侧一致
+        __more_file_cnt_mustbe=${__R_unmatch};
+    fi
+    
+    
+    if [ -f "${__more_ret_file}" -o  -f "${__more_ret_file_unzip_name}" ]; then
+        if [ -f "${__more_ret_file}" -a "${__more_ret_file##*.}" == "gz" ]; then
+            __gz_line_cnt=`gzip -dc ${__more_ret_file} | wc -l`
+        else
+            __gz_line_cnt=`cat ${__more_ret_file_unzip_name} | wc -l`
+        fi
+        
+        
+        if [ ${__gz_line_cnt} -ne ${__more_file_cnt_mustbe} ]; then
+            $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 ${__more_ret_file} 压缩包中的记录数:  ${__gz_line_cnt}  与数据库中记录数：${__more_file_cnt_mustbe} 不匹配 ..."
+             return 1
+        fi
+    fi
+    
+    
+    # 检查 diff 文件 diff 文件必须第一轮的中间结果文件，和 more文件同时存在
+    
+    if [ ${__biz_province_code:0:1} -eq 8 ]; then  # 以PBOSS
+        # RES_DIFF_PBOSS_20151010010000_2002230.0001398425.gz 
+        __tmp_str=${__more_ret_file:9} # 去掉前缀 RES_DIFF_
+        
+        # PBOSS 第一轮结果文件需要将文件的业务代码改成 800X 
+        __first_result_file_name=${__tmp_str/00_200/00_800}
+        
+    elif [ ${__biz_province_code:0:1} -eq 9 ]; then  # 以BOSS
+    
+        # RES_DIFF_BOSS_20151010010000_2002230.0001398425.gz 
+        __tmp_str=${__more_ret_file:9} # 去掉前缀 RES_DIFF_
+        
+        # PBOSS 第一轮结果文件需要将文件的业务代码改成 900X 
+        __first_result_file_name=${__tmp_str/00_200/00_900}
+        
+    fi
+    
+    # 三文件必须到期
+    __first_result_file_unzip_name=${__first_result_file_name%.*}
+    
+    # $ECHO  "[xxxxxx]  $__first_result_file_unzip_name $__more_ret_file_unzip_name   $__diff_ret_file_unzip_name"
+
+    
+    if [ -f "${__first_result_file_unzip_name}" -a -f "${__more_ret_file_unzip_name}" -a -f "$__diff_ret_file_unzip_name" ]; then
+        __first_result_file_cnt=`cat ${__first_result_file_unzip_name} | wc -l`
+        __more_ret_file_cnt=`cat ${__more_ret_file_unzip_name} | wc -l`
+        __diff_ret_file_cnt=`cat ${__diff_ret_file_unzip_name} | wc -l`
+    elif [ -f "${__first_result_file_name}" -a -f "${__more_ret_file}" -a -f  "${__diff_ret_file}" ]; then
+        __first_result_file_cnt=`gzip -dc ${__first_result_file_name} | wc -l`
+        __more_ret_file_cnt=`gzip -dc ${__more_ret_file} | wc -l`
+        __diff_ret_file_cnt=`gzip -dc ${__diff_ret_file} | wc -l`
+    else
+        $ECHO  "[ERROR]     校验 ${__biz_province_code} 中 ${__first_result_file_name}  ${__more_ret_file}   ${__diff_ret_file} 文件未齐全，请检查 ..."
+        return 1
+    fi
+    
+
+    
+     __unmatch=`expr $__more_ret_file_cnt + $__diff_ret_file_cnt `
+        
+    if [ ${__first_result_file_cnt} -ne  ${__unmatch} ]; then
+        $ECHO  "[ERROR]     结果 ${__biz_province_code} 中 ${__more_ret_file} 压缩包， [FIRST_RET != MORE + DIFF], FIRST: ${__first_result_file_cnt};  MORE+DIFF: $__more_ret_file_cnt + $__diff_ret_file_cnt = $__unmatch"
+    fi
+    
+    return 0
+}
+
+# 初始化函数
+init ()
+{
+     . cfConfigFile.sh
+    if [ -f $HOME/conf/check-wlw-result.conf ];then 
+        conf_file=$HOME/conf/check-wlw-result.conf
+    else
+        conf_file=$DQAS_HOME/conf/check-wlw-result.conf
+        if [ ! -f ${conf_file} ];then
+            echo "conf file [${conf_file}] not exist,exit!"
+            exit 1
+        fi
+    fi
+    
+    # if [ -f $HOME/bin/merge-result-incoiming-table.awk ];then
+        # MEARGE_RESULT_IMCOMING_TABLE_AWK=$HOME/bin/merge-result-incoiming-table.awk
+    # else
+        # MEARGE_RESULT_IMCOMING_TABLE_AWK=$DQAS_HOME/bin/merge-result-incoiming-table.awk
+        # if [ ! -f ${MEARGE_RESULT_IMCOMING_TABLE_AWK} ];then
+            # echo "MEARGE_RESULT_IMCOMING_TABLE_AWK file [${MEARGE_RESULT_IMCOMING_TABLE_AWK}] not exist,exit!"
+            # exit 1
+        # fi
+    # fi
+   
+     # if [ -f $HOME/bin/suggest-redo-list.awk ];then
+        # SUGGEST_REDO_LIST_AWK=$HOME/bin/suggest-redo-list.awk
+     # else
+        # SUGGEST_REDO_LIST_AWK=$DQAS_HOME/bin/suggest-redo-list.awk
+        # if [ ! -f ${SUGGEST_REDO_LIST_AWK} ];then
+            # echo "SUGGEST_REDO_LIST_AWK file [${SUGGEST_REDO_LIST_AWK}] not exist,exit!"
+            # exit 1
+        # fi
+     # fi
+  
+    
+    cfInit ${conf_file} noLock readOnly
+    dbsid=$(cfGetConfigItem common dbsid)
+    dbuser=$(cfGetConfigItem common dbuser)
+    dbpwd=$(cfGetConfigItem common dbpasswd)
+    # dbpwd=`getdbpwd ${dbuser}`
+    
+    OUTPUT_DIR=$(cfGetConfigItem common outputdir)
+    THRESHOLD=${THRESHOLD:=`cfGetConfigItem common threshold`};
+    MARK_SYMBLE_FLAG=${MARK_SYMBLE_FLAG:="BR"};
+    [ -z "${OUTPUT_DIR}" ] && OUTPUT_DIR="./output/"
+
+    headDump
+
+    [ ! -d ${OUTPUT_DIR} ] && mkdir -p ${OUTPUT_DIR}
+    
+    # rm ${OUTPUT_DIR}/month*
+    
+    > $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout
+    if [ ${RAW_INPUT_FILE} == "__DB__" ]; then
+        $ECHO  "[MESSAGE]    查询数据库 ..."
+        {
+            getRawResult2Table_rule0 ${MONTH}
+        } 
+    else
+       $ECHO  "[MESSAGE]    待开发 ..."
+    fi
+    
+    
+    # 检查差异文件压缩包里面的记录数是否与数据库中的一致
+    awk  '{print $1" "$2" "$3" "$8" "$9}'  $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout | while read line ; do
+        echo $line | read biz_province_code left_file right_file left_unmatch right_unmatch
+        
+        if [ ${biz_province_code:0:1} -eq 2 ]; then
+            # PBOSS 第一轮结果文件需要将文件的业务代码改成 800X 
+            ret_left_file=${left_file/00_200/00_800}
+            
+            # BOSS 第一轮结果文件需要将文件的业务代码改成 900X 
+            ret_right_file=${right_file/00_200/00_900}
+            
+            echo "$biz_province_code|$left_file|$right_file|$ret_left_file|$ret_right_file"
+            check_left_right_resutl_file $biz_province_code $ret_left_file $left_unmatch $ret_right_file $right_unmatch
+        
+        elif [ ${biz_province_code:0:1} -eq 8 ]; then  # PBOSS 差异文件细化
+        
+            # more_time_str=`echo ${left_file} | awk -F '_'  '{print $2}'`
+            # diff_time_str=`echo ${right_file} | awk -F '_'  '{print $2}'`
+          
+            ret_more_file="RES_MORE_${left_file/00_800/00_200}"
+            ret_diff_file="RES_DIFF_${right_file/00_800/00_200}"
+            
+            echo "$biz_province_code|$left_file|$right_file|$ret_more_file|$ret_diff_file"
+            check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch
+            
+        elif [ ${biz_province_code:0:1} -eq 9 ]; then  # BOSS 差异文件细化
+  
+            ret_diff_file="RES_DIFF_${left_file/00_900/00_200}"
+            ret_more_file="RES_MORE_${right_file/00_900/00_200}"
+            
+            echo "$biz_province_code|$left_file|$right_file|$ret_diff_file|$ret_more_file"
+            check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch
+        fi
+    done
+    # 
+    
+}
+
+
+
+
+#main 入口#################################
+
+IGNORE_MONTH=${IGNORE_MONTH:="NO"}; # 如果数据由文件导入而非数据库导入则，忽略月份
+MONTH=${MONTH:=`date +%Y%m`};
+CURRENT_TIME=`date +%Y%m%d%H%M%S`;
+RAW_OUTPUT_FILE=${RAW_OUTPUT_FILE:="pro_raw_output_${MONTH}.${CURRENT_TIME}"};
+RAW_INPUT_FILE=${RAW_INPUT_FILE:="__DB__"};
+DUMP_SQL=${DUMP_SQL:='NO'}
+
+if [ ${IGNORE_MONTH} == "YES" ];then
+    MONTH=${RAW_INPUT_FILE_MONTH}
+fi
+[ ${#MONTH} -ne 6 ]  && $ECHO  "[ERROR]        输入月份 MONTH="${MONTH}" 格式错误! 正确格式如: '201509' ..." &&  exit
+
+
+init
+
