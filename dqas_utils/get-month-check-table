@@ -18,7 +18,7 @@ cat  << EOF
 # Author      : jigc@cmsz.com
 # Script Name : get-month-check-table
 # Description : 月全量检查报表脚本
-# Version     : V3.2
+# Version     : V3.3
 # Usage       : get-month-check-table [-m 201509] [--threshold 90] [--force pattern] [--mark <sideSymble>] [--dump-sql]
 
          -m 指定要检查的月份，格式如 -m 201509 (如果不指定默认月份为本月)
