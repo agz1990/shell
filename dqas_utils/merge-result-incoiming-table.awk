@@ -16,6 +16,7 @@ BEGIN{
     
     COMPARE_RATDO_THRESHOLD    =    90;
     DEFAULT_RESULT_TIME        =     "2000-01-01#00:00:00";
+    DEFAULT_RESULT_TIME2       =     "2000-01-01 00:00:00";
     INCOMING_CNT               =     0;
     INCOMING_VALID_CNT         =     0;
     INCOMING_TOTAL_SIZE        =     0;
@@ -353,7 +354,7 @@ END{
                 R_FLAG          =    "RRR";
                 INCOMING_VALID_CNT ++;
                 INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]
-            } else if(_ONE_FILE_ROW[__RET2_CREATE_TIME] != DEFAULT_RESULT_TIME){ # 如果已经有结果生成，其他文件则默认标记为 '-'
+            } else if(_RET[__RET2_CREATE_TIME] != DEFAULT_RESULT_TIME2){ # 如果已经有结果生成，其他文件则默认标记为 '-'
                 STATE_SYMBLE    =    " - ";
             } else {
                 
@@ -490,7 +491,7 @@ END{
                 C_FLAG            =    "CCC";
                 INCOMING_VALID_CNT ++;
                 INCOMING_VALID_SIZE += _ONE_FILE_ROW[__MICM_FILE_SIZE]                    
-            } else if(_ONE_FILE_ROW[__RET3_CREATE_TIME] != DEFAULT_RESULT_TIME){ # 如果已经有结果生成，其他文件则默认标记为 '-'
+            } else if(_RET[__RET3_CREATE_TIME] != DEFAULT_RESULT_TIME2){ # 如果已经有结果生成，其他文件则默认标记为 '-'
                 STATE_SYMBLE    =    " - ";
             } else {
                 SIDE_SYMBLE    =   getOneFileSideSymble(FILE_NAME,_RET[__RET3_COMPARE_TYPE]);
