@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 if [ `uname` = "Linux" ]; then
     ECHO="echo -e" 
@@ -200,7 +200,7 @@ check_more_diff_resutl_file(){
     if [ ${__biz_province_code:0:1} -eq 8 ]; then  # 以PBOSS的第一轮差异文件做基准则more文件记录数需要和左侧一致
         __more_file_cnt_mustbe=${__L_unmatch};
     elif [ ${__biz_province_code:0:1} -eq 9 ]; then  # 以BOSS的第一轮差异文件做基准则more文件记录数需要和右侧一致
-        __more_file_cnt_mustbe=${__R_unmatch};
+        __more_file_cnt_mustbe=${__L_unmatch};
     fi
     
     # 规则1 检查 MORE 文件记录数是否等于数据库中的记录数
@@ -350,8 +350,7 @@ init ()
     
     
     # 检查差异文件压缩包里面的记录数是否与数据库中的一致
-    awk  '{print $1" "$2" "$3" "$8" "$9}'  $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout | while read line ; do
-        echo $line | read biz_province_code left_file right_file left_unmatch right_unmatch compare_type compare_rule
+    awk  '{print $1" "$2" "$3" "$8" "$9}'  $OUTPUT_DIR/${RAW_OUTPUT_FILE}.sqlout | while read biz_province_code left_file right_file left_unmatch right_unmatch compare_type compare_rule ; do
         
         if [ ${biz_province_code:0:1} -eq 2 ]; then
             # PBOSS 第一轮结果文件需要将文件的业务代码改成 800X 
@@ -379,8 +378,8 @@ init ()
             
         elif [ ${biz_province_code:0:1} -eq 9 ]; then  # BOSS 差异文件细化
   
-            ret_diff_file="RES_DIFF_${left_file/00_900/00_200}"
-            ret_more_file="RES_MORE_${right_file/00_900/00_200}"
+            ret_more_file="RES_MORE_${left_file/00_900/00_200}"
+            ret_diff_file="RES_DIFF_${right_file/00_900/00_200}"
             compare_key_index=${compare_rule:0:1}
             echo "$biz_province_code|$left_file|$right_file|$ret_diff_file|$ret_more_file"
             check_more_diff_resutl_file $biz_province_code $ret_more_file $left_unmatch $ret_diff_file $right_unmatch $compare_key_index
