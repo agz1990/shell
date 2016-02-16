@@ -1,0 +1,187 @@
+BL##INFO#20151229000001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229000001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+touch /opt/mcb/pcs/var/log/unzipintfiles.log.20151229
+BL##INFO#20151229000001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229001500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229001500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229001501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229003000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229003000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229003001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229004500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229004500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229004500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229010000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229010000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229010001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229011500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229011500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229011500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229013000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229013000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229013001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229014500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229014500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229014501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229020000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229020000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229020001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229021500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229021500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229021501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229023000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229023000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229023001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229024500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229024500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229024501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229030000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229030000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229030001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229031500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229031500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229031500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229033000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229033000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229033001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229034500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229034500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229034500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229040000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229040000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229040001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229041501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229041501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229041501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229043000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229043000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229043001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229044500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229044500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229044501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229050000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229050000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229050001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229051500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229051500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229051501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229053000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229053000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229053001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229054500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229054500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229054501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229060000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229060000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229060001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229061500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229061500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229061501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229063001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229063001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229063001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229064500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229064500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229064501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229070001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229070001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229070001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229071500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229071500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229071501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229073000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229073000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229073001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229074500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229074500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229074500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229080000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229080000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229080001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229081500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229081500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229081501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229083000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229083000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229083001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229084500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229084500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229084500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229090000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229090000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229090001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229091500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229091500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229091500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229093000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229093000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229093001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229094500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229094500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229094501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229100000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229100000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229100001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229101500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229101500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229101501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229103000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229103000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229103001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229104500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229104500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229104500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229110000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229110000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229110001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229111501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229111501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229111501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229113000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229113000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229113001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229114501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229114501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229114501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229120000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229120000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229120000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229121500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229121500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229121501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229123000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229123000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229123001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229124501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229124501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229124501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229130000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229130000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229130000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229131500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229131500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229131500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229133000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229133000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229133001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229134500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229134500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229134501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229140001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229140001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229140001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229141500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229141500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229141501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229143000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229143000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229143001#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229144500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229144500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229144500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229150000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229150000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229150000#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
+BL##INFO#20151229151500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:mcb_cronjob.sh start!##LB
+BL##INFO#20151229151500#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Starting cronjob Monitor.sh+unzipintfiles ##LB
+BL##INFO#20151229151501#cmszmftb#pcs#COM#mcb_cronjob.sh###00000000#0###msg_cont:Cronjob Monitor.sh+unzipintfiles  finished with return code 0.##LB
