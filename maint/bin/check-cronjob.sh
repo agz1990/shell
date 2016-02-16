@@ -29,7 +29,7 @@ cat  << EOF
 # Log         :
 #  2016.02.15   V1.0: 实现基本功能
 
-# 示例：
+# 示例        :
     $ check-cronjob.sh -d 20151228 --log-path /opt/mcb/maint/log
 #######################################################################
 EOF
@@ -91,7 +91,8 @@ check_one_job(){
             pass_flag='%'
         fi
 
-        $ECHO "${finish_flag}${pass_flag}|$run_times\t$success_times\t$error_times\t$__log_file "
+#        $ECHO "${finish_flag}${pass_flag}|$run_times\t$success_times\t$error_times\t`basename $__log_file `"
+        printf "%s|%4d|%4d|%4d| `basename $__log_file` \n"  "${finish_flag}${pass_flag}" $__job_times $success_times $error_times
     else
         $ECHO "\t[WARN]Check File $__log_file not exist!"
     fi
@@ -119,10 +120,11 @@ main(){
     if [ ! -f ${CHECT_CRONJOB_LIST_FILE} ];then
         $ECHO "\t[WARN] CronJob列表文件[${CHECT_CRONJOB_LIST_FILE}] 不存在, 检查所有任务!\n"
     fi
-    $ECHO "标|运行\t成功\t失败\t日志 "
+
+    $ECHO "##|目标|成功|失败| - 日志文件 --------------------------------------------------"
 
     if [ -f $CHECT_CRONJOB_LIST_FILE ]; then
-        for job_conf in `cat $CHECT_CRONJOB_LIST_FILE`; do
+        for job_conf in `cat $CHECT_CRONJOB_LIST_FILE |grep -v "^#"`; do
 
             job_name=${job_conf%:*}
             job_times=${job_conf##*:}
@@ -135,10 +137,9 @@ main(){
 
         done
     else
-        for log_file in `ls $LOG_PATH/*+*.${DATE}`; do
+        for log_file in `ls $LOG_PATH/*+*.${DATE} 2> /dev/null`; do
             job_times=0
             check_one_job $log_file $job_times
-
         done
     fi
 }
